@@ -1,0 +1,43 @@
+---
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# Docker's official APT repository and release signing key.
+docker_repo_url: https://download.docker.com/linux/ubuntu
+docker_repo_channel: stable
+docker_gpg_url: https://download.docker.com/linux/ubuntu/gpg
+docker_gpg_fingerprint: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+docker_keyring: /etc/apt/keyrings/docker.asc
+
+# Distribution packages that conflict with docker-ce. The role stops if any
+# are installed instead of removing them; uninstall them yourself first.
+docker_conflicting_packages:
+  - docker.io
+  - docker-doc
+  - docker-compose
+  - docker-compose-v2
+  - podman-docker
+  - containerd
+  - runc
+
+# Adding a user to the docker group gives them root-equivalent access.
+# Takes effect at the next login.
+docker_add_user_to_group: true
+
+docker_apt_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+
+# Written to /etc/docker/daemon.json. Default: json-file logs capped at
+# 50 MB per container (5 files of 10 MB). Applies to containers created
+# after the change; existing containers keep their old settings until
+# recreated.
+docker_daemon_config:
+  log-driver: json-file
+  log-opts:
+    max-size: 10m
+    max-file: "5"

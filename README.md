@@ -71,6 +71,23 @@ The `git` role (`install_git`, tag `git`) installs Git and manages global settin
 
   Without `user.yml`, the role leaves `user.name` and `user.email` unchanged and prints a reminder. `user.yml` is loaded as play variables, so it takes precedence over `group_vars` and `host_vars`. Never put passwords, tokens, or keys in it.
 
+## Docker
+
+The `docker` role (`install_docker`, tag `docker`) installs Docker Engine, Buildx, and the Compose plugin (`docker compose`) from Docker's official APT repository, enables the `docker` and `containerd` services, and adds you to the `docker` group.
+
+- Docker's signing key is saved to `/etc/apt/keyrings/docker.asc` and checked against the fingerprint in `docker_gpg_fingerprint`. A mismatch stops the run. If Docker rotates its key, verify the new fingerprint against Docker's documentation before updating the variable.
+- If Ubuntu's own Docker packages (such as `docker.io` or `docker-compose-v2`) are installed, the role stops and lists them instead of removing them. Remove them with `sudo apt remove ...`; images and volumes in `/var/lib/docker` are kept.
+- Membership of the `docker` group is equivalent to root access. Set `docker_add_user_to_group: false` to use `sudo docker` instead. Group changes apply at your next login; run `newgrp docker` to use them in the current shell.
+- Container logs are capped at 50 MB per container (5 rotated files of 10 MB) through `docker_daemon_config`, which is written to `/etc/docker/daemon.json`. Changing it restarts Docker, which stops running containers. Existing containers keep their old log settings until they are recreated (for example `docker compose up -d --force-recreate`).
+- On the first check-mode run, the repository does not exist yet, so the package, service, and group tasks are skipped with a note.
+
+After the first apply and a new login, verify with:
+
+```bash
+docker run --rm hello-world
+docker compose version
+```
+
 ## Update and troubleshoot
 
 Pull reviewed changes with `git pull --ff-only`, review the package lists and profile, preview with check mode, then rerun the setup. The base role requests package presence and leaves routine system upgrades to Ubuntu.

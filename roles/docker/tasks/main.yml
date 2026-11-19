@@ -1,0 +1,116 @@
+---
+- name: Gather installed package facts
+  ansible.builtin.package_facts:
+
+- name: Stop if packages that conflict with Docker CE are installed
+  ansible.builtin.assert:
+    that: conflicting | length == 0
+    fail_msg: >-
+      These packages conflict with Docker CE: {{ conflicting | join(', ') }}.
+      Remove them (sudo apt remove ...) and rerun. Existing images and
+      volumes in /var/lib/docker are kept by apt remove.
+    quiet: true
+  vars:
+    conflicting: "{{ docker_conflicting_packages | select('in', ansible_facts.packages) | list }}"
+
+# python3-debian is required by deb822_repository.
+- name: Ensure repository prerequisites are installed
+  become: true
+  ansible.builtin.apt:
+    name: [ca-certificates, gpg, python3-debian]
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure the Docker signing key is present
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ docker_gpg_url }}"
+    dest: "{{ docker_keyring }}"
+    mode: "0644"
+    force: false
+
+- name: Read the Docker signing key fingerprint
+  ansible.builtin.command:
+    argv: [gpg, --show-keys, --with-colons, "{{ docker_keyring }}"]
+  register: docker_key
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+# A mismatching key is left in place so later runs keep failing until it is
+# inspected and removed.
+- name: Verify the Docker signing key fingerprint
+  ansible.builtin.assert:
+    that: docker_gpg_fingerprint in docker_key.stdout
+    fail_msg: >-
+      {{ docker_keyring }} does not have fingerprint {{ docker_gpg_fingerprint }}.
+      Inspect it before deleting and rerunning.
+    quiet: true
+  when: docker_key.rc == 0 or not ansible_check_mode
+
+- name: Ensure the Docker APT repository is configured
+  become: true
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: [deb]
+    uris: [ "{{ docker_repo_url }}" ]
+    suites: [ "{{ ansible_facts.distribution_release }}" ]
+    components: [ "{{ docker_repo_channel }}" ]
+    architectures: [ "{{ docker_apt_arch_map[ansible_facts.architecture] }}" ]
+    signed_by: "{{ docker_keyring }}"
+  register: docker_repo
+
+- name: Refresh the APT index after adding the Docker repository
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: docker_repo is changed and not ansible_check_mode
+
+# In check mode on a first run the repository is not really added, so APT
+# cannot see the packages yet and the remaining tasks would fail.
+- name: Note that Docker tasks are skipped in check mode until the repository exists
+  ansible.builtin.debug:
+    msg: The Docker repository would be added; package, service, and group tasks are skipped in check mode.
+  when: docker_repo is changed and ansible_check_mode
+
+- name: Install and enable Docker
+  when: not (docker_repo is changed and ansible_check_mode)
+  block:
+    - name: Ensure Docker packages are installed
+      become: true
+      ansible.builtin.apt:
+        name: "{{ docker_packages }}"
+        state: present
+        install_recommends: false
+        fail_on_autoremove: true
+
+    - name: Ensure the Docker daemon configuration
+      become: true
+      ansible.builtin.copy:
+        content: "{{ docker_daemon_config | to_nice_json }}\n"
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: "0644"
+        backup: true
+        validate: dockerd --validate --config-file %s
+      notify: Restart Docker
+
+    - name: Ensure Docker services are enabled and running
+      become: true
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop: [containerd, docker]
+
+    - name: Ensure the user is in the docker group
+      become: true
+      ansible.builtin.user:
+        name: "{{ ansible_facts.user_id }}"
+        groups: docker
+        append: true
+      when: docker_add_user_to_group | bool

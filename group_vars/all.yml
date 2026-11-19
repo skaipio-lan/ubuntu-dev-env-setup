@@ -4,6 +4,7 @@
 install_base: true
 install_shell: true
 install_git: true
+install_docker: true
 
 # Ubuntu releases this setup has been verified against.
 supported_ubuntu_versions:
