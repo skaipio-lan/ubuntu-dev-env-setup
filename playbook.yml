@@ -31,3 +31,7 @@
     - role: docker
       when: install_docker | default(false) | bool
       tags: [docker]
+
+    - role: applications
+      when: install_applications | default(false) | bool
+      tags: [applications]

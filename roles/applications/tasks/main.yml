@@ -1,0 +1,5 @@
+---
+- name: Install Zed
+  ansible.builtin.import_tasks: zed.yml
+  when: applications_zed | bool
+  tags: [zed]

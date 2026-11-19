@@ -1,0 +1,44 @@
+---
+- name: Ensure Zed directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  # No mode: creates missing directories without changing existing permissions.
+  loop:
+    - "{{ ansible_facts.user_dir }}/.local/bin"
+    - "{{ ansible_facts.user_dir }}/.local/share/applications"
+
+# Skipped when Zed is already installed; Zed updates itself afterwards.
+- name: Ensure Zed is installed
+  ansible.builtin.unarchive:
+    src: "{{ zed_download_url }}"
+    dest: "{{ zed_install_dir | dirname }}"
+    remote_src: true
+    creates: "{{ zed_install_dir }}/bin/zed"
+
+- name: Ensure the zed command is on PATH
+  ansible.builtin.file:
+    src: "{{ zed_install_dir }}/bin/zed"
+    dest: "{{ ansible_facts.user_dir }}/.local/bin/zed"
+    state: link
+    # In check mode on a first run the target does not exist yet.
+    force: "{{ ansible_check_mode }}"
+
+- name: Read the bundled Zed desktop entry
+  ansible.builtin.slurp:
+    src: "{{ zed_install_dir }}/share/applications/dev.zed.Zed.desktop"
+  register: zed_desktop
+  # In check mode on a first run Zed is not unpacked yet.
+  failed_when: false
+
+# Same substitutions as install.sh, so the app launcher points at this copy.
+# Rerunning also picks up desktop entry changes from Zed's self-updates.
+- name: Ensure the Zed desktop entry is installed
+  ansible.builtin.copy:
+    content: >-
+      {{ zed_desktop.content | b64decode
+         | regex_replace('Icon=zed', 'Icon=' ~ zed_install_dir ~ '/share/icons/hicolor/512x512/apps/zed.png')
+         | regex_replace('Exec=zed', 'Exec=' ~ zed_install_dir ~ '/bin/zed') }}
+    dest: "{{ ansible_facts.user_dir }}/.local/share/applications/dev.zed.Zed.desktop"
+    mode: "0755"  # Matches install.sh, which copies the bundled file's mode.
+  when: zed_desktop.content is defined

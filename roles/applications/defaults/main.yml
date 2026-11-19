@@ -1,0 +1,10 @@
+---
+# Per-application switches. Each application has its own tag as well.
+applications_zed: true
+
+# Zed is installed the same way as the official install script
+# (https://zed.dev/install.sh): the stable tarball is unpacked into
+# ~/.local/zed.app, then Zed keeps itself up to date. Ansible only installs
+# it when missing and keeps the launcher and desktop entry in place.
+zed_install_dir: "{{ ansible_facts.user_dir }}/.local/zed.app"
+zed_download_url: "https://zed.dev/api/releases/stable/latest/zed-linux-{{ ansible_facts.architecture }}.tar.gz"

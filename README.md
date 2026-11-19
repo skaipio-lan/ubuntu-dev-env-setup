@@ -88,6 +88,18 @@ docker run --rm hello-world
 docker compose version
 ```
 
+## Applications
+
+The `applications` role (`install_applications`, tag `applications`) installs desktop applications for your user. Each application has its own switch and tag.
+
+| Application | Switch | Tag | Source |
+| --- | --- | --- | --- |
+| Zed | `applications_zed` | `zed` | Official stable tarball from zed.dev |
+
+**Zed** is installed the same way as Zed's official install script: unpacked into `~/.local/zed.app`, with a `zed` command in `~/.local/bin` and a desktop entry in `~/.local/share/applications`. Ansible downloads it only when it is missing; after that Zed updates itself. An existing install made with the official script is adopted as is. The download is verified by HTTPS only, the same as the official script.
+
+To add an application, create `roles/applications/tasks/<app>.yml`, import it from `roles/applications/tasks/main.yml` with its own `when` switch and tag, and add the switch to `roles/applications/defaults/main.yml`.
+
 ## Update and troubleshoot
 
 Pull reviewed changes with `git pull --ff-only`, review the package lists and profile, preview with check mode, then rerun the setup. The base role requests package presence and leaves routine system upgrades to Ubuntu.
