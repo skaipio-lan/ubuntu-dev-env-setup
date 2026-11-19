@@ -95,8 +95,17 @@ The `applications` role (`install_applications`, tag `applications`) installs de
 | Application | Switch | Tag | Source |
 | --- | --- | --- | --- |
 | Zed | `applications_zed` | `zed` | Official stable tarball from zed.dev |
+| Ferdium | `applications_ferdium` | `ferdium` | Official `.deb` from GitHub releases, pinned and checksum-verified |
 
 **Zed** is installed the same way as Zed's official install script: unpacked into `~/.local/zed.app`, with a `zed` command in `~/.local/bin` and a desktop entry in `~/.local/share/applications`. Ansible downloads it only when it is missing; after that Zed updates itself. An existing install made with the official script is adopted as is. The download is verified by HTTPS only, the same as the official script.
+
+**Ferdium** is installed from the official `.deb` on GitHub, pinned to `ferdium_version` and verified against `ferdium_sha256` in `roles/applications/defaults/main.yml`. The download goes to a temporary directory and is deleted after installation. It does not update itself, and Ferdium shows untrusted web content, so keep it current:
+
+```bash
+scripts/ferdium-latest-release.sh   # prints version and checksums as YAML
+```
+
+Review the release notes, paste the output into `roles/applications/defaults/main.yml`, and run `./setup.sh --tags ferdium`. A newer installed version is never downgraded. A checksum mismatch stops the run before anything is installed.
 
 To add an application, create `roles/applications/tasks/<app>.yml`, import it from `roles/applications/tasks/main.yml` with its own `when` switch and tag, and add the switch to `roles/applications/defaults/main.yml`.
 

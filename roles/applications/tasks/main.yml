@@ -3,3 +3,8 @@
   ansible.builtin.import_tasks: zed.yml
   when: applications_zed | bool
   tags: [zed]
+
+- name: Install Ferdium
+  ansible.builtin.import_tasks: ferdium.yml
+  when: applications_ferdium | bool
+  tags: [ferdium]

@@ -1,0 +1,46 @@
+---
+- name: Gather installed package facts
+  ansible.builtin.package_facts:
+
+# Install when missing or older than ferdium_version. A newer installed
+# version is left alone rather than downgraded.
+- name: Decide whether Ferdium needs installing
+  ansible.builtin.set_fact:
+    ferdium_needs_install: >-
+      {{ 'ferdium' not in ansible_facts.packages
+         or ansible_facts.packages['ferdium'][0].version is version(ferdium_version, '<') }}
+
+# apt cannot install from a .deb that check mode never downloaded.
+- name: Note that Ferdium would be installed
+  ansible.builtin.debug:
+    msg: Ferdium {{ ferdium_version }} would be downloaded, verified, and installed.
+  when: ferdium_needs_install | bool and ansible_check_mode
+
+- name: Download, verify, and install Ferdium
+  when: ferdium_needs_install | bool and not ansible_check_mode
+  block:
+    - name: Create a temporary download directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: ferdium
+      register: ferdium_tmp
+
+    - name: Download the Ferdium package and verify its checksum
+      ansible.builtin.get_url:
+        url: "{{ ferdium_deb_url }}"
+        dest: "{{ ferdium_tmp.path }}/ferdium.deb"
+        checksum: "sha256:{{ ferdium_sha256[ferdium_arch] }}"
+        mode: "0644"
+
+    - name: Ensure Ferdium is installed
+      become: true
+      ansible.builtin.apt:
+        deb: "{{ ferdium_tmp.path }}/ferdium.deb"
+        fail_on_autoremove: true
+
+  always:
+    - name: Remove the temporary download directory
+      ansible.builtin.file:
+        path: "{{ ferdium_tmp.path }}"
+        state: absent
+      when: ferdium_tmp.path is defined

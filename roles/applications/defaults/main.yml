@@ -1,6 +1,7 @@
 ---
 # Per-application switches. Each application has its own tag as well.
 applications_zed: true
+applications_ferdium: true
 
 # Zed is installed the same way as the official install script
 # (https://zed.dev/install.sh): the stable tarball is unpacked into
@@ -8,3 +9,16 @@ applications_zed: true
 # it when missing and keeps the launcher and desktop entry in place.
 zed_install_dir: "{{ ansible_facts.user_dir }}/.local/zed.app"
 zed_download_url: "https://zed.dev/api/releases/stable/latest/zed-linux-{{ ansible_facts.architecture }}.tar.gz"
+
+# Ferdium is installed from the official .deb on GitHub, pinned to a version
+# and verified by SHA-256. It is not updated automatically: to update, run
+# scripts/ferdium-latest-release.sh and paste its output here.
+ferdium_version: "7.2.3"
+ferdium_sha256:
+  amd64: f8a3f5d3b6bc4e6af6a91f291fe807b97a84aa20b91313c65e860ea95d54adba
+  arm64: e979ee4aa1ce2710144531967e2e10501bf889cb4b9a3789028cab3e0fa8f818
+ferdium_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+ferdium_arch: "{{ ferdium_arch_map[ansible_facts.architecture] }}"
+ferdium_deb_url: "https://github.com/ferdium/ferdium-app/releases/download/v{{ ferdium_version }}/Ferdium-linux-{{ ferdium_version }}-{{ ferdium_arch }}.deb"
