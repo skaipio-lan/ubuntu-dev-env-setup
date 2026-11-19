@@ -1,0 +1,39 @@
+---
+- name: Ensure Git is installed
+  become: true
+  ansible.builtin.apt:
+    name: git
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure global Git settings
+  community.general.git_config:
+    scope: global
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+  loop: "{{ git_global_config | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Ensure Git identity
+  community.general.git_config:
+    scope: global
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+  loop:
+    - { key: user.name, value: "{{ git_user_name }}" }
+    - { key: user.email, value: "{{ git_user_email }}" }
+  loop_control:
+    label: "{{ item.key }}"
+  when: item.value | length > 0
+
+- name: Report missing Git identity
+  ansible.builtin.debug:
+    msg: >-
+      Git user.name or user.email is not set. Copy user.example.yml to
+      user.yml, set git_user_name and git_user_email, and rerun with
+      --tags git.
+  when: git_user_name | length == 0 or git_user_email | length == 0

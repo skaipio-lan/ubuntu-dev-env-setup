@@ -1,0 +1,8 @@
+---
+# Personal settings for this machine. Copy to user.yml and uncomment:
+#   cp user.example.yml user.yml
+# user.yml is ignored by Git, so personal details stay out of the repository.
+# Never put passwords, tokens, or keys here.
+
+# git_user_name: "Jane Doe"
+# git_user_email: "jane@example.com"

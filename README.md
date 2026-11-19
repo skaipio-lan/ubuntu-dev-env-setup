@@ -1,0 +1,82 @@
+# Ubuntu workstation setup
+
+Phase 1 configures a local Ubuntu 26.04 LTS installation with four base packages: CA certificates, curl, Git, and unzip. The inventory names the Dell Pro Max 16 as the first workstation. GNOME, development toolchains, Docker, desktop applications, dotfiles, and discovery tooling are planned for later phases.
+
+## First run
+
+Start from an installed Ubuntu 26.04 system with Bash, sudo access, and working Ubuntu APT repositories including Universe. Clone this repository with Git (install Git first if needed), enter the checkout, and run as your usual login user:
+
+```bash
+./setup.sh
+```
+
+The script uses APT to install missing prerequisites (ansible-core, python3-apt, and sudo), processes requirements.yml with Ansible Galaxy, and runs the local playbook. The `community.general` collection is installed into `~/.ansible/collections`. Enter your sudo password at the become-password prompt. The play recap reports changes per host, and a failed run returns a nonzero exit status.
+
+## Preview and repeat
+
+```bash
+./setup.sh --check --diff
+./setup.sh --tags base
+./setup.sh
+```
+
+To preview before your first apply, install the prerequisites with `sudo apt-get update && sudo apt-get install --no-install-recommends ansible-core python3-apt sudo`. Check mode reports missing prerequisites and exits before installing them. The APT module predicts package changes. An immediate repeat after a successful apply should report `changed=0`.
+
+## Configure a profile
+
+Edit `group_vars/all.yml` to set shared role switches. Each role has a flat switch named `install_<role>` (for example `install_base`). A switch that is missing or `false` skips its role. Because the switches are separate variables, a machine or a single run can override one without restating the others. Tags narrow the enabled roles for one run. To try an override without editing files:
+
+```bash
+./setup.sh -e install_base=false
+```
+
+The package list lives in `roles/base/defaults/main.yml`. To curate it for this laptop, create `host_vars/dell_pro_max_16.yml` with a complete replacement list:
+
+```yaml
+base_packages:
+  - ca-certificates
+  - curl
+  - git
+  - unzip
+  - jq
+```
+
+Removing a package from this list leaves installed copies in place. Use Ubuntu archive package names. Keep credentials and private keys out of Git.
+
+Supported Ubuntu releases are listed once in `supported_ubuntu_versions` in `group_vars/all.yml`; the playbook stops on any other release.
+
+For another machine, use a separate inventory with its own host alias in the workstations group and run the checkout locally there. A local connection always refers to the machine executing Ansible. Keep hardware-specific variables under the matching host alias. Add future roles to playbook.yml with their own tag and an `install_<role>` switch, guarded with `when: install_<role> | default(false) | bool`. Put user settings in user-scoped tasks and elevate only tasks that need system privileges.
+
+## Shell
+
+The `shell` role (`install_shell`, tag `shell`) installs zsh, clones Oh My Zsh into `~/.oh-my-zsh`, writes `~/.zshrc` and `~/.zprofile`, and makes zsh your login shell. Log out and back in for the login-shell change to apply.
+
+- Change the theme or plugins with `ohmyzsh_theme` and `ohmyzsh_plugins` (see `roles/shell/defaults/main.yml`), in `group_vars/all.yml` or `host_vars/<host>.yml`.
+- `~/.zshrc` is managed by Ansible. Editing it directly is undone on the next run, and Ansible keeps a timestamped backup of the replaced version. Put machine-specific settings and secrets in `~/.zshrc.local`, which `~/.zshrc` sources and Git never sees.
+- `~/.zprofile` loads `~/.profile`, so zsh keeps the PATH entries Ubuntu sets there, such as `~/.local/bin`.
+- Oh My Zsh is cloned once and not updated by Ansible. It reminds you when updates are available; run `omz update` to apply them.
+- Set `shell_set_default: false` to install everything without changing your login shell.
+
+## Git
+
+The `git` role (`install_git`, tag `git`) installs Git and manages global settings in `~/.gitconfig`.
+
+- Shared settings live in `git_global_config` (`roles/git/defaults/main.yml`); it sets `init.defaultBranch` to `main`. Removing an entry stops managing it but does not unset it.
+- Your name and email come from `user.yml` at the repository root, which Git ignores:
+
+  ```bash
+  cp user.example.yml user.yml   # then uncomment and edit the values
+  ./setup.sh --tags git
+  ```
+
+  Without `user.yml`, the role leaves `user.name` and `user.email` unchanged and prints a reminder. `user.yml` is loaded as play variables, so it takes precedence over `group_vars` and `host_vars`. Never put passwords, tokens, or keys in it.
+
+## Update and troubleshoot
+
+Pull reviewed changes with `git pull --ff-only`, review the package lists and profile, preview with check mode, then rerun the setup. The base role requests package presence and leaves routine system upgrades to Ubuntu.
+
+The base role refreshes the APT index when it is more than an hour old. If APT still cannot locate a package, verify its name and enabled repositories. If another package manager holds the lock, wait for it to finish before retrying. For Ansible diagnostics, rerun with `./setup.sh -v`. To inspect playbook syntax after bootstrap, use `ansible-playbook playbook.yml --syntax-check`. `ansible.cfg` supplies the inventory, the Python interpreter, and YAML-formatted task results.
+
+If a task fails with `Timed out waiting for become success or become password prompt`, Ansible is using `sudo-rs`, the default `sudo` on Ubuntu 26.04, whose prompt it cannot detect. `ansible.cfg` sets `become_exe = /usr/bin/sudo.ws` (classic sudo from the `sudo` package, which `setup.sh` installs if missing) to avoid this without changing the system default.
+
+Run `./setup.sh` as your normal user. It refuses to run as root, because user-scoped roles must target your account.

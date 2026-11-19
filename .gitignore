@@ -1,0 +1,4 @@
+*.retry
+*.local.yml
+.ansible/
+/user.yml

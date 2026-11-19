@@ -1,0 +1,10 @@
+---
+# Identity is set in user.yml at the repository root (not tracked in Git).
+# Empty values leave user.name and user.email untouched.
+git_user_name: ""
+git_user_email: ""
+
+# Global settings written to ~/.gitconfig. Add entries as needed.
+# Settings removed from this list are left in place, not unset.
+git_global_config:
+  init.defaultBranch: main

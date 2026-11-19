@@ -1,0 +1,5 @@
+---
+collections:
+  # git_config (roles/git). 11.x+ supports ansible-core 2.17 and newer.
+  - name: community.general
+    version: ">=11.0.0,<13.0.0"

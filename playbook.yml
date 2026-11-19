@@ -1,0 +1,29 @@
+---
+- name: Configure Ubuntu workstations
+  hosts: workstations
+  # Personal settings: user.yml if present, otherwise the empty example.
+  vars_files:
+    - [user.yml, user.example.yml]
+  pre_tasks:
+    - name: Verify the supported Ubuntu release
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version in supported_ubuntu_versions
+        fail_msg: >-
+          Ubuntu {{ ansible_facts.distribution_version }} is not in
+          supported_ubuntu_versions ({{ supported_ubuntu_versions | join(', ') }}).
+      tags: [always]
+
+  roles:
+    - role: base
+      when: install_base | default(false) | bool
+      tags: [base]
+
+    - role: shell
+      when: install_shell | default(false) | bool
+      tags: [shell]
+
+    - role: git
+      when: install_git | default(false) | bool
+      tags: [git]

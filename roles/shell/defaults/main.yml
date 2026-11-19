@@ -1,0 +1,17 @@
+---
+# git is listed so the role works even when install_base is false.
+shell_packages:
+  - zsh
+  - git
+
+# Make zsh the login shell. Takes effect at the next login.
+shell_set_default: true
+
+# Oh My Zsh is cloned once and then left alone; it updates itself
+# (see the zstyle setting in the .zshrc template).
+ohmyzsh_repo: https://github.com/ohmyzsh/ohmyzsh.git
+ohmyzsh_version: master
+ohmyzsh_dir: "{{ ansible_facts.user_dir }}/.oh-my-zsh"
+ohmyzsh_theme: robbyrussell
+ohmyzsh_plugins:
+  - git

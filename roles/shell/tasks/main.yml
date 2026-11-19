@@ -1,0 +1,45 @@
+---
+- name: Ensure zsh is installed
+  become: true
+  ansible.builtin.apt:
+    name: "{{ shell_packages }}"
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+
+# Cloned directly instead of running the upstream install script, which
+# rewrites ~/.zshrc and changes the login shell outside Ansible's control.
+- name: Ensure Oh My Zsh is present
+  ansible.builtin.git:
+    repo: "{{ ohmyzsh_repo }}"
+    dest: "{{ ohmyzsh_dir }}"
+    version: "{{ ohmyzsh_version }}"
+    depth: 1
+    single_branch: true
+    update: false
+
+- name: Ensure ~/.zshrc is configured
+  ansible.builtin.template:
+    src: zshrc.j2
+    dest: "{{ ansible_facts.user_dir }}/.zshrc"
+    mode: "0644"
+    backup: true
+
+# zsh login shells read ~/.zprofile, not ~/.profile. Without this, PATH
+# entries from ~/.profile (such as ~/.local/bin) disappear, including for
+# the GNOME session, which is started through the login shell.
+- name: Ensure ~/.zprofile loads ~/.profile
+  ansible.builtin.template:
+    src: zprofile.j2
+    dest: "{{ ansible_facts.user_dir }}/.zprofile"
+    mode: "0644"
+    backup: true
+
+- name: Ensure zsh is the login shell
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_facts.user_id }}"
+    shell: /usr/bin/zsh
+  when: shell_set_default | bool
