@@ -1,0 +1,7 @@
+---
+# ansible-lint configuration. Run from the repository root: ansible-lint
+profile: production
+
+exclude_paths:
+  - .ansible/
+  - .git/

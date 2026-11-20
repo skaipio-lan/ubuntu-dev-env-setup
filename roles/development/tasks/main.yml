@@ -1,0 +1,10 @@
+---
+- name: Ensure development packages are installed
+  become: true
+  ansible.builtin.apt:
+    name: "{{ development_packages }}"
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600

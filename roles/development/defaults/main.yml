@@ -1,0 +1,4 @@
+---
+# Development tools from the Ubuntu archive.
+development_packages:
+  - ansible-lint  # Lints this repository; pulls in yamllint.

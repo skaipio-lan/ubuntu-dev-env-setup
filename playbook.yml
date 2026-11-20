@@ -28,6 +28,10 @@
       when: install_git | default(false) | bool
       tags: [git]
 
+    - role: development
+      when: install_development | default(false) | bool
+      tags: [development]
+
     - role: docker
       when: install_docker | default(false) | bool
       tags: [docker]
