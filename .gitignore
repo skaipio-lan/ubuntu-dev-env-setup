@@ -2,3 +2,4 @@
 *.local.yml
 .ansible/
 /user.yml
+/inventory/

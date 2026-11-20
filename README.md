@@ -134,6 +134,26 @@ Each tool is installed with its official install script only when its command is
 
 Log in after installation by running `claude` or `codex`. Credentials stay in `~/.claude` and `~/.codex` and are never managed by this repository. Copies that Zed downloads for its agent panel are separate and managed by Zed.
 
+## Inventory an existing machine
+
+`scripts/inventory.py` lists what is installed and customised on the current machine, to help decide what to add to this setup. It only reads: it needs no sudo and changes nothing.
+
+```bash
+scripts/inventory.py
+```
+
+It writes a Markdown report to `inventory/<hostname>-<timestamp>.md` (ignored by Git, readable only by you) covering:
+
+- Manually installed APT packages, with first-install date, whether they were added after the OS install, and the repository they came from
+- APT sources (credentials in URIs are masked)
+- Snap and Flatpak applications
+- GNOME Shell extensions (system or user, enabled or not)
+- VS Code and Zed extensions
+- Commands in `~/.local/bin`
+- Customised GNOME settings from `dconf dump` for selected paths, without window state, automatic bookkeeping, or keys that may hold secrets
+
+The "In repo" column marks items whose name already appears in the roles, `group_vars`, `playbook.yml`, `setup.sh`, or `requirements.yml`. Review the report and add only what you want; do not install everything it lists.
+
 ## Update and troubleshoot
 
 Pull reviewed changes with `git pull --ff-only`, review the package lists and profile, preview with check mode, then rerun the setup. The base role requests package presence and leaves routine system upgrades to Ubuntu.
