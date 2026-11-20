@@ -7,6 +7,7 @@ development_packages:
 development_python: true
 development_node: true
 development_github_cli: true
+development_azure_cli: true
 
 # Python through pyenv (https://github.com/pyenv/pyenv), checked out at a
 # release tag. Bump the tag to get newer Python definitions.
@@ -54,6 +55,15 @@ development_github_cli_gpg_fingerprints:
   - 2C6106201985B60E6C7AC87323F3D4EA75716059
   - 7F38BBB59D064DBCB3D84D725612B36462313325
 development_github_cli_keyring: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+
+# Azure CLI (az) from Microsoft's APT repository
+# (https://learn.microsoft.com/cli/azure/install-azure-cli-linux), using the
+# suite for the running Ubuntu release. Same keyring rules as above.
+development_azure_cli_repo_url: https://packages.microsoft.com/repos/azure-cli/
+development_azure_cli_gpg_url: https://packages.microsoft.com/keys/microsoft.asc
+development_azure_cli_gpg_fingerprints:
+  - BC528686B50D79E339D3721CEB3E94ADBE1229CF
+development_azure_cli_keyring: /etc/apt/keyrings/microsoft.asc
 
 development_apt_arch_map:
   x86_64: amd64

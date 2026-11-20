@@ -20,6 +20,29 @@
   tags: [node]
 
 - name: Set up the GitHub CLI
-  ansible.builtin.import_tasks: github_cli.yml
+  ansible.builtin.import_tasks: apt_repository.yml
+  vars:
+    repo_name: github-cli
+    repo_uri: "{{ development_github_cli_repo_url }}"
+    repo_suite: stable
+    repo_components: [main]
+    repo_key_url: "{{ development_github_cli_gpg_url }}"
+    repo_keyring: "{{ development_github_cli_keyring }}"
+    repo_fingerprints: "{{ development_github_cli_gpg_fingerprints }}"
+    repo_packages: [gh]
   when: development_github_cli | bool
   tags: [gh]
+
+- name: Set up the Azure CLI
+  ansible.builtin.import_tasks: apt_repository.yml
+  vars:
+    repo_name: azure-cli
+    repo_uri: "{{ development_azure_cli_repo_url }}"
+    repo_suite: "{{ ansible_facts.distribution_release }}"
+    repo_components: [main]
+    repo_key_url: "{{ development_azure_cli_gpg_url }}"
+    repo_keyring: "{{ development_azure_cli_keyring }}"
+    repo_fingerprints: "{{ development_azure_cli_gpg_fingerprints }}"
+    repo_packages: [azure-cli]
+  when: development_azure_cli | bool
+  tags: [az]

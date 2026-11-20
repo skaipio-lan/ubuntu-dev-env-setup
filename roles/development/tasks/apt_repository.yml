@@ -1,0 +1,71 @@
+---
+# Installs packages from a signed third-party APT repository. Expects:
+#   repo_name, repo_uri, repo_suite, repo_components, repo_key_url,
+#   repo_keyring, repo_fingerprints, repo_packages
+
+# python3-debian is required by deb822_repository.
+- name: "Ensure APT repository prerequisites are installed: {{ repo_name }}"
+  become: true
+  ansible.builtin.apt:
+    name: [ca-certificates, gpg, python3-debian]
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: "Ensure the signing keyring is present: {{ repo_name }}"
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ repo_key_url }}"
+    dest: "{{ repo_keyring }}"
+    mode: "0644"
+    force: false
+
+- name: "Read the signing key fingerprints: {{ repo_name }}"
+  ansible.builtin.command:
+    argv: [gpg, --show-keys, --with-colons, "{{ repo_keyring }}"]
+  register: development_repo_key
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+# A mismatching keyring is left in place so later runs keep failing until it
+# is inspected and removed.
+- name: "Verify the signing key fingerprints: {{ repo_name }}"
+  ansible.builtin.assert:
+    that: repo_fingerprints | reject('in', development_repo_key.stdout) | list | length == 0
+    fail_msg: >-
+      {{ repo_keyring }} does not contain all of {{ repo_fingerprints | join(', ') }}.
+      Inspect it before deleting and rerunning.
+    quiet: true
+  when: development_repo_key.rc == 0 or not ansible_check_mode
+
+- name: "Ensure the APT repository is configured: {{ repo_name }}"
+  become: true
+  ansible.builtin.deb822_repository:
+    name: "{{ repo_name }}"
+    types: [deb]
+    uris: ["{{ repo_uri }}"]
+    suites: ["{{ repo_suite }}"]
+    components: "{{ repo_components }}"
+    architectures: ["{{ development_apt_arch_map[ansible_facts.architecture] }}"]
+    signed_by: "{{ repo_keyring }}"
+  register: development_repo
+
+- name: "Refresh the APT index after adding the repository: {{ repo_name }}"
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: development_repo is changed and not ansible_check_mode
+
+# In check mode on a first run the repository is not really added, so APT
+# cannot see the packages yet.
+- name: "Ensure packages are installed: {{ repo_name }}"
+  become: true
+  ansible.builtin.apt:
+    name: "{{ repo_packages }}"
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+  when: not (development_repo is changed and ansible_check_mode)

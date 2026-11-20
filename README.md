@@ -97,11 +97,18 @@ The `development` role also installs [pyenv](https://github.com/pyenv/pyenv) and
 - To update pyenv or nvm themselves, bump the release tag variable and rerun with `--tags python` or `--tags node`.
 - The shell integration lines are in the `~/.zshrc` template of the `shell` role, not added by the tools' own installers. They do nothing when a tool is absent. Rerun with `--tags shell` after changing them.
 
-### GitHub CLI
+### GitHub CLI and Azure CLI
 
-The `development` role installs `gh` from [GitHub's official APT repository](https://github.com/cli/cli/blob/trunk/docs/install_linux.md) (switch `development_github_cli`, tag `gh`). APT then updates it with the rest of the system. The keyring at `/etc/apt/keyrings/githubcli-archive-keyring.gpg` must contain every fingerprint in `development_github_cli_gpg_fingerprints`, or the run stops. When GitHub rotates its keys, delete the keyring, update the fingerprint list from that page, and rerun with `--tags gh`.
+The `development` role installs these CLIs from their vendors' official APT repositories, so APT updates them with the rest of the system:
 
-Sign in once with `gh auth login`; the role does not handle credentials.
+| Tool | Package | Switch | Tag | Repository |
+| --- | --- | --- | --- | --- |
+| `gh` | `gh` | `development_github_cli` | `gh` | [cli.github.com](https://github.com/cli/cli/blob/trunk/docs/install_linux.md), suite `stable` |
+| `az` | `azure-cli` | `development_azure_cli` | `az` | [packages.microsoft.com](https://learn.microsoft.com/cli/azure/install-azure-cli-linux), suite for the running Ubuntu release |
+
+Both use `roles/development/tasks/apt_repository.yml`. Each keyring in `/etc/apt/keyrings` must contain every fingerprint listed in `development_*_gpg_fingerprints`, or the run stops. When a vendor rotates its keys, delete the keyring, update the fingerprint list from the vendor's install page, and rerun with the tool's tag.
+
+Sign in once with `gh auth login` and `az login`; the role does not handle credentials.
 
 ## Docker
 
