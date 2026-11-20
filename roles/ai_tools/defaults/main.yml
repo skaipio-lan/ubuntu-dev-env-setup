@@ -1,0 +1,11 @@
+---
+# Per-tool switches. Each tool has its own tag as well.
+ai_tools_claude: true
+ai_tools_codex: true
+
+# Both tools are installed with their official install scripts, only when
+# the command is missing. After that each tool updates itself.
+ai_tools_bin_dir: "{{ ansible_facts.user_dir }}/.local/bin"
+
+ai_tools_claude_installer_url: https://claude.ai/install.sh
+ai_tools_codex_installer_url: https://chatgpt.com/codex/install.sh

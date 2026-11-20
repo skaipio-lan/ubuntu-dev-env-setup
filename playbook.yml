@@ -35,3 +35,7 @@
     - role: applications
       when: install_applications | default(false) | bool
       tags: [applications]
+
+    - role: ai_tools
+      when: install_ai_tools | default(false) | bool
+      tags: [ai_tools]

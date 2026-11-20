@@ -109,6 +109,19 @@ Review the release notes, paste the output into `roles/applications/defaults/mai
 
 To add an application, create `roles/applications/tasks/<app>.yml`, import it from `roles/applications/tasks/main.yml` with its own `when` switch and tag, and add the switch to `roles/applications/defaults/main.yml`.
 
+## AI tools
+
+The `ai_tools` role (`install_ai_tools`, tag `ai_tools`) installs command-line AI coding tools for your user. Each tool has its own switch and tag.
+
+| Tool | Switch | Tag | Command | Installer |
+| --- | --- | --- | --- | --- |
+| Claude Code | `ai_tools_claude` | `claude` | `claude` | `https://claude.ai/install.sh` |
+| Codex | `ai_tools_codex` | `codex` | `codex` | `https://chatgpt.com/codex/install.sh` |
+
+Each tool is installed with its official install script only when its command is missing from `~/.local/bin`; afterwards the tool updates itself. Both installers verify the SHA-256 checksum of the binary they download. The scripts themselves are fetched over HTTPS and deleted after use. They run with `~/.local/bin` on `PATH`, so they do not edit `~/.zshrc` or other startup files. The Codex installer runs with `NON_INTERACTIVE=1`, which skips its optional prompts.
+
+Log in after installation by running `claude` or `codex`. Credentials stay in `~/.claude` and `~/.codex` and are never managed by this repository. Copies that Zed downloads for its agent panel are separate and managed by Zed.
+
 ## Update and troubleshoot
 
 Pull reviewed changes with `git pull --ff-only`, review the package lists and profile, preview with check mode, then rerun the setup. The base role requests package presence and leaves routine system upgrades to Ubuntu.

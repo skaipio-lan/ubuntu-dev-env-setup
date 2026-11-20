@@ -1,0 +1,41 @@
+---
+- name: Check whether {{ tool_name }} is installed
+  ansible.builtin.stat:
+    path: "{{ ai_tools_bin_dir }}/{{ tool_command }}"
+  register: tool_bin
+
+- name: Note that {{ tool_name }} would be installed
+  ansible.builtin.debug:
+    msg: "{{ tool_name }} would be installed with {{ tool_installer_url }}."
+  when: not tool_bin.stat.exists and ansible_check_mode
+
+- name: Install {{ tool_name }} with its official installer
+  when: not tool_bin.stat.exists and not ansible_check_mode
+  block:
+    - name: Create a temporary directory for the {{ tool_name }} installer
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: "{{ tool_command }}"
+      register: tool_tmp
+
+    - name: Download the {{ tool_name }} installer
+      ansible.builtin.get_url:
+        url: "{{ tool_installer_url }}"
+        dest: "{{ tool_tmp.path }}/install.sh"
+        mode: "0644"
+
+    # ~/.local/bin is put first on PATH so the installers never edit shell
+    # startup files (~/.zshrc is managed by the shell role).
+    - name: Run the {{ tool_name }} installer
+      ansible.builtin.command:
+        argv: ["{{ tool_installer_shell }}", "{{ tool_tmp.path }}/install.sh"]
+        chdir: "{{ tool_tmp.path }}"
+        creates: "{{ ai_tools_bin_dir }}/{{ tool_command }}"
+      environment: "{{ tool_environment | combine({'PATH': ai_tools_bin_dir ~ ':' ~ ansible_facts.env.PATH}) }}"
+
+  always:
+    - name: Remove the {{ tool_name }} installer
+      ansible.builtin.file:
+        path: "{{ tool_tmp.path }}"
+        state: absent
+      when: tool_tmp.path is defined

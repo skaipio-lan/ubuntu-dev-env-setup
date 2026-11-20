@@ -6,6 +6,7 @@ install_shell: true
 install_git: true
 install_docker: true
 install_applications: true
+install_ai_tools: true
 
 # Ubuntu releases this setup has been verified against.
 supported_ubuntu_versions:

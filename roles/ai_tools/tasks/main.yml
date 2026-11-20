@@ -1,0 +1,31 @@
+---
+- name: Install Claude Code
+  ansible.builtin.include_tasks:
+    file: install.yml
+    apply:
+      tags: [claude]
+  vars:
+    tool_name: Claude Code
+    tool_command: claude
+    tool_installer_url: "{{ ai_tools_claude_installer_url }}"
+    tool_installer_shell: bash
+    tool_environment: {}
+  when: ai_tools_claude | bool
+  tags: [claude]
+
+- name: Install Codex
+  ansible.builtin.include_tasks:
+    file: install.yml
+    apply:
+      tags: [codex]
+  vars:
+    tool_name: Codex
+    tool_command: codex
+    tool_installer_url: "{{ ai_tools_codex_installer_url }}"
+    tool_installer_shell: sh
+    # Answer "no" to the installer's optional prompts (start now, remove
+    # other installs) instead of waiting for input.
+    tool_environment:
+      NON_INTERACTIVE: "1"
+  when: ai_tools_codex | bool
+  tags: [codex]
