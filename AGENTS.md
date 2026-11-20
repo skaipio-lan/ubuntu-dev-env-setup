@@ -10,3 +10,4 @@ These instructions apply throughout this repository.
 ## Ansible conventions
 
 - Access facts only through `ansible_facts`, for example `ansible_facts.env.PATH` or `ansible_facts.user_dir`. Never use top-level fact variables such as `ansible_env`, `ansible_user_dir`, or `ansible_distribution`. They are deprecated and removed in ansible-core 2.24, and `ansible.cfg` sets `inject_facts_as_vars = false`, so they fail with an undefined-variable error. Magic variables that are not facts, such as `ansible_check_mode`, are unaffected.
+- Run `ansible-lint` from the repository root before committing, and fix all findings. The repository must pass the `production` profile configured in `.ansible-lint`. Suppress a rule only with an inline `# noqa: <rule>` on the specific task, with a comment explaining why.
