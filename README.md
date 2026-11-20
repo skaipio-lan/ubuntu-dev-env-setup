@@ -97,6 +97,12 @@ The `development` role also installs [pyenv](https://github.com/pyenv/pyenv) and
 - To update pyenv or nvm themselves, bump the release tag variable and rerun with `--tags python` or `--tags node`.
 - The shell integration lines are in the `~/.zshrc` template of the `shell` role, not added by the tools' own installers. They do nothing when a tool is absent. Rerun with `--tags shell` after changing them.
 
+### GitHub CLI
+
+The `development` role installs `gh` from [GitHub's official APT repository](https://github.com/cli/cli/blob/trunk/docs/install_linux.md) (switch `development_github_cli`, tag `gh`). APT then updates it with the rest of the system. The keyring at `/etc/apt/keyrings/githubcli-archive-keyring.gpg` must contain every fingerprint in `development_github_cli_gpg_fingerprints`, or the run stops. When GitHub rotates its keys, delete the keyring, update the fingerprint list from that page, and rerun with `--tags gh`.
+
+Sign in once with `gh auth login`; the role does not handle credentials.
+
 ## Docker
 
 The `docker` role (`install_docker`, tag `docker`) installs Docker Engine, Buildx, and the Compose plugin (`docker compose`) from Docker's official APT repository, enables the `docker` and `containerd` services, and adds you to the `docker` group.

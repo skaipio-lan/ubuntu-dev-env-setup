@@ -1,0 +1,68 @@
+---
+# python3-debian is required by deb822_repository.
+- name: Ensure GitHub CLI repository prerequisites are installed
+  become: true
+  ansible.builtin.apt:
+    name: [ca-certificates, gpg, python3-debian]
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure the GitHub CLI signing keyring is present
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ development_github_cli_gpg_url }}"
+    dest: "{{ development_github_cli_keyring }}"
+    mode: "0644"
+    force: false
+
+- name: Read the GitHub CLI signing key fingerprints
+  ansible.builtin.command:
+    argv: [gpg, --show-keys, --with-colons, "{{ development_github_cli_keyring }}"]
+  register: development_github_cli_key
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+# A mismatching keyring is left in place so later runs keep failing until it
+# is inspected and removed.
+- name: Verify the GitHub CLI signing key fingerprints
+  ansible.builtin.assert:
+    that: development_github_cli_gpg_fingerprints | reject('in', development_github_cli_key.stdout) | list | length == 0
+    fail_msg: >-
+      {{ development_github_cli_keyring }} does not contain all of
+      {{ development_github_cli_gpg_fingerprints | join(', ') }}.
+      Inspect it before deleting and rerunning.
+    quiet: true
+  when: development_github_cli_key.rc == 0 or not ansible_check_mode
+
+- name: Ensure the GitHub CLI APT repository is configured
+  become: true
+  ansible.builtin.deb822_repository:
+    name: github-cli
+    types: [deb]
+    uris: ["{{ development_github_cli_repo_url }}"]
+    suites: [stable]
+    components: [main]
+    architectures: ["{{ development_apt_arch_map[ansible_facts.architecture] }}"]
+    signed_by: "{{ development_github_cli_keyring }}"
+  register: development_github_cli_repo
+
+- name: Refresh the APT index after adding the GitHub CLI repository
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: development_github_cli_repo is changed and not ansible_check_mode
+
+# In check mode on a first run the repository is not really added, so APT
+# cannot see the package yet.
+- name: Ensure the GitHub CLI is installed
+  become: true
+  ansible.builtin.apt:
+    name: gh
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+  when: not (development_github_cli_repo is changed and ansible_check_mode)

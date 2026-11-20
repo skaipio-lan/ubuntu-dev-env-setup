@@ -18,3 +18,8 @@
   ansible.builtin.import_tasks: node.yml
   when: development_node | bool
   tags: [node]
+
+- name: Set up the GitHub CLI
+  ansible.builtin.import_tasks: github_cli.yml
+  when: development_github_cli | bool
+  tags: [gh]

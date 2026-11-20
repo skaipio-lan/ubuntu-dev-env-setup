@@ -6,6 +6,7 @@ development_packages:
 # Per-tool switches. Each tool has its own tag as well.
 development_python: true
 development_node: true
+development_github_cli: true
 
 # Python through pyenv (https://github.com/pyenv/pyenv), checked out at a
 # release tag. Bump the tag to get newer Python definitions.
@@ -41,3 +42,19 @@ development_nvm_dir: "{{ ansible_facts.user_dir }}/.nvm"
 # A major version or nvm alias. Installed when no matching version is, and
 # set as nvm's default. Run `nvm install 26` to pick up newer releases.
 development_node_version: "26"
+
+# GitHub CLI (gh) from GitHub's official APT repository
+# (https://github.com/cli/cli/blob/trunk/docs/install_linux.md). The keyring
+# must contain every listed fingerprint; they are published at the top of
+# that page. If GitHub rotates keys, delete the keyring, update the list,
+# and rerun.
+development_github_cli_repo_url: https://cli.github.com/packages
+development_github_cli_gpg_url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+development_github_cli_gpg_fingerprints:
+  - 2C6106201985B60E6C7AC87323F3D4EA75716059
+  - 7F38BBB59D064DBCB3D84D725612B36462313325
+development_github_cli_keyring: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+
+development_apt_arch_map:
+  x86_64: amd64
+  aarch64: arm64
