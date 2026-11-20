@@ -29,3 +29,49 @@
       NON_INTERACTIVE: "1"
   when: ai_tools_codex | bool
   tags: [codex]
+
+# The package's own install script would register the same repository; it
+# skips that when another APT source already points at it.
+- name: Install Claude Desktop
+  ansible.builtin.import_role:
+    name: apt_repository
+  vars:
+    apt_repository_name: claude-desktop
+    apt_repository_uri: "{{ ai_tools_claude_desktop_repo_url }}"
+    apt_repository_suite: stable
+    apt_repository_components: [main]
+    apt_repository_key_url: "{{ ai_tools_claude_desktop_gpg_url }}"
+    apt_repository_keyring: "{{ ai_tools_claude_desktop_keyring }}"
+    apt_repository_fingerprints: "{{ ai_tools_claude_desktop_gpg_fingerprints }}"
+    apt_repository_packages: [claude-desktop]
+    # Recommends include QEMU, OVMF, and virtiofsd for Cowork.
+    apt_repository_install_recommends: true
+  when: ai_tools_claude_desktop | bool
+  tags: [claude-desktop]
+
+- name: Ensure the user is in the kvm group for Claude Desktop Cowork
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_facts.user_id }}"
+    groups: kvm
+    append: true
+  when: ai_tools_claude_desktop | bool and ai_tools_claude_desktop_kvm_group | bool
+  tags: [claude-desktop]
+
+# OpenAI publishes no download URL for the APT signing key, so a copy taken
+# from the package is kept in roles/apt_repository/files. The package's
+# install script keeps an existing chatgpt.sources that differs from its own.
+- name: Install the ChatGPT desktop app
+  ansible.builtin.import_role:
+    name: apt_repository
+  vars:
+    apt_repository_name: chatgpt
+    apt_repository_uri: "{{ ai_tools_chatgpt_desktop_repo_url }}"
+    apt_repository_suite: stable
+    apt_repository_components: [main]
+    apt_repository_key_src: chatgpt-archive-keyring.asc
+    apt_repository_keyring: "{{ ai_tools_chatgpt_desktop_keyring }}"
+    apt_repository_fingerprints: "{{ ai_tools_chatgpt_desktop_gpg_fingerprints }}"
+    apt_repository_packages: [chatgpt]
+  when: ai_tools_chatgpt_desktop | bool
+  tags: [chatgpt]

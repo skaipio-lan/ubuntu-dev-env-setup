@@ -106,7 +106,7 @@ The `development` role installs these CLIs from their vendors' official APT repo
 | `gh` | `gh` | `development_github_cli` | `gh` | [cli.github.com](https://github.com/cli/cli/blob/trunk/docs/install_linux.md), suite `stable` |
 | `az` | `azure-cli` | `development_azure_cli` | `az` | [packages.microsoft.com](https://learn.microsoft.com/cli/azure/install-azure-cli-linux), suite for the running Ubuntu release |
 
-Both use `roles/development/tasks/apt_repository.yml`. Each keyring in `/etc/apt/keyrings` must contain every fingerprint listed in `development_*_gpg_fingerprints`, or the run stops. When a vendor rotates its keys, delete the keyring, update the fingerprint list from the vendor's install page, and rerun with the tool's tag.
+Both use the `apt_repository` helper role (see [Third-party APT repositories](#third-party-apt-repositories)). Each keyring in `/etc/apt/keyrings` must contain every fingerprint listed in `development_*_gpg_fingerprints`, or the run stops. When a vendor rotates its keys, delete the keyring, update the fingerprint list from the vendor's install page, and rerun with the tool's tag.
 
 Sign in once with `gh auth login` and `az login`; the role does not handle credentials.
 
@@ -159,7 +159,25 @@ The `ai_tools` role (`install_ai_tools`, tag `ai_tools`) installs command-line A
 
 Each tool is installed with its official install script only when its command is missing from `~/.local/bin`; afterwards the tool updates itself. Both installers verify the SHA-256 checksum of the binary they download. The scripts themselves are fetched over HTTPS and deleted after use. They run with `~/.local/bin` on `PATH`, so they do not edit `~/.zshrc` or other startup files. The Codex installer runs with `NON_INTERACTIVE=1`, which skips its optional prompts.
 
-Log in after installation by running `claude` or `codex`. Credentials stay in `~/.claude` and `~/.codex` and are never managed by this repository. Copies that Zed downloads for its agent panel are separate and managed by Zed.
+### Desktop apps
+
+The `ai_tools` role also installs the official desktop apps from their vendors' APT repositories. Both are early releases on Linux.
+
+| App | Package | Switch | Tag | Status |
+| --- | --- | --- | --- | --- |
+| Claude Desktop | `claude-desktop` | `ai_tools_claude_desktop` | `claude-desktop` | Beta, [install docs](https://code.claude.com/docs/en/desktop-linux) |
+| ChatGPT (with Codex) | `chatgpt` | `ai_tools_chatgpt_desktop` | `chatgpt` | Preview, [install docs](https://learn.chatgpt.com/codex/linux/linux-app) |
+
+- Neither app updates itself; APT updates them with the rest of the system.
+- Both packages register their vendor's repository when installed. This role manages that repository entry itself, and both packages leave an existing entry alone, so no duplicate is created.
+- Claude Desktop is installed with its recommended packages (QEMU, OVMF, and virtiofsd), and your user is added to the `kvm` group, so Cowork can run its virtual machine. Log out and back in afterwards. Set `ai_tools_claude_desktop_kvm_group: false` to skip the group.
+- OpenAI does not publish a download URL for the ChatGPT repository key, so the role installs a copy extracted from the package, `roles/apt_repository/files/chatgpt-archive-keyring.asc`. It is checked against the pinned fingerprint like the other keys.
+
+Log in to the command-line tools by running `claude` or `codex`, and to the desktop apps when you first open them. Credentials stay in `~/.claude` and `~/.codex` and are never managed by this repository. Copies that Zed downloads for its agent panel are separate and managed by Zed.
+
+## Third-party APT repositories
+
+`roles/apt_repository` is a helper role, not listed in `playbook.yml`. Other roles import it to add a signed vendor repository and install packages from it. It downloads or copies the keyring into `/etc/apt/keyrings`, stops unless the keyring contains every pinned fingerprint, writes `/etc/apt/sources.list.d/<name>.sources`, and installs the packages. Its variables are documented in `roles/apt_repository/defaults/main.yml`. A keyring that fails the check is left in place so later runs keep failing until you inspect and remove it.
 
 ## Inventory an existing machine
 

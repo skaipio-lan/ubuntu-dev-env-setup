@@ -20,29 +20,31 @@
   tags: [node]
 
 - name: Set up the GitHub CLI
-  ansible.builtin.import_tasks: apt_repository.yml
+  ansible.builtin.import_role:
+    name: apt_repository
   vars:
-    repo_name: github-cli
-    repo_uri: "{{ development_github_cli_repo_url }}"
-    repo_suite: stable
-    repo_components: [main]
-    repo_key_url: "{{ development_github_cli_gpg_url }}"
-    repo_keyring: "{{ development_github_cli_keyring }}"
-    repo_fingerprints: "{{ development_github_cli_gpg_fingerprints }}"
-    repo_packages: [gh]
+    apt_repository_name: github-cli
+    apt_repository_uri: "{{ development_github_cli_repo_url }}"
+    apt_repository_suite: stable
+    apt_repository_components: [main]
+    apt_repository_key_url: "{{ development_github_cli_gpg_url }}"
+    apt_repository_keyring: "{{ development_github_cli_keyring }}"
+    apt_repository_fingerprints: "{{ development_github_cli_gpg_fingerprints }}"
+    apt_repository_packages: [gh]
   when: development_github_cli | bool
   tags: [gh]
 
 - name: Set up the Azure CLI
-  ansible.builtin.import_tasks: apt_repository.yml
+  ansible.builtin.import_role:
+    name: apt_repository
   vars:
-    repo_name: azure-cli
-    repo_uri: "{{ development_azure_cli_repo_url }}"
-    repo_suite: "{{ ansible_facts.distribution_release }}"
-    repo_components: [main]
-    repo_key_url: "{{ development_azure_cli_gpg_url }}"
-    repo_keyring: "{{ development_azure_cli_keyring }}"
-    repo_fingerprints: "{{ development_azure_cli_gpg_fingerprints }}"
-    repo_packages: [azure-cli]
+    apt_repository_name: azure-cli
+    apt_repository_uri: "{{ development_azure_cli_repo_url }}"
+    apt_repository_suite: "{{ ansible_facts.distribution_release }}"
+    apt_repository_components: [main]
+    apt_repository_key_url: "{{ development_azure_cli_gpg_url }}"
+    apt_repository_keyring: "{{ development_azure_cli_keyring }}"
+    apt_repository_fingerprints: "{{ development_azure_cli_gpg_fingerprints }}"
+    apt_repository_packages: [azure-cli]
   when: development_azure_cli | bool
   tags: [az]

@@ -2,6 +2,8 @@
 # Per-tool switches. Each tool has its own tag as well.
 ai_tools_claude: true
 ai_tools_codex: true
+ai_tools_claude_desktop: true
+ai_tools_chatgpt_desktop: true
 
 # Both tools are installed with their official install scripts, only when
 # the command is missing. After that each tool updates itself.
@@ -9,3 +11,22 @@ ai_tools_bin_dir: "{{ ansible_facts.user_dir }}/.local/bin"
 
 ai_tools_claude_installer_url: https://claude.ai/install.sh
 ai_tools_codex_installer_url: https://chatgpt.com/codex/install.sh
+
+# Claude Desktop (beta) from Anthropic's APT repository
+# (https://code.claude.com/docs/en/desktop-linux).
+ai_tools_claude_desktop_repo_url: https://downloads.claude.ai/claude-desktop/apt/stable
+ai_tools_claude_desktop_gpg_url: https://downloads.claude.ai/claude-desktop/key.asc
+ai_tools_claude_desktop_gpg_fingerprints:
+  - 31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE
+ai_tools_claude_desktop_keyring: /etc/apt/keyrings/claude-desktop.asc
+# Cowork runs tasks in a QEMU/KVM virtual machine and needs the kvm group.
+# Takes effect at the next login.
+ai_tools_claude_desktop_kvm_group: true
+
+# ChatGPT desktop app with Codex (preview) from OpenAI's APT repository
+# (https://learn.chatgpt.com/codex/linux/linux-app). The fingerprint matches
+# the key embedded in the package and pinned by OpenAI's Arch installer.
+ai_tools_chatgpt_desktop_repo_url: https://persistent.oaistatic.com/codex-app-prod/linux/deb
+ai_tools_chatgpt_desktop_gpg_fingerprints:
+  - 3BFA0E4AE8B8CC16A2D9BA684A3B4A566C4660E4
+ai_tools_chatgpt_desktop_keyring: /etc/apt/keyrings/chatgpt.asc

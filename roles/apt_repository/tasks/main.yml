@@ -1,0 +1,78 @@
+---
+# python3-debian is required by deb822_repository.
+- name: "Ensure APT repository prerequisites are installed: {{ apt_repository_name }}"
+  become: true
+  ansible.builtin.apt:
+    name: [ca-certificates, gpg, python3-debian]
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: "Ensure the signing keyring is downloaded: {{ apt_repository_name }}"
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ apt_repository_key_url }}"
+    dest: "{{ apt_repository_keyring }}"
+    mode: "0644"
+    force: false
+  when: apt_repository_key_url | length > 0
+
+- name: "Ensure the signing keyring is copied: {{ apt_repository_name }}"
+  become: true
+  ansible.builtin.copy:
+    src: "{{ apt_repository_key_src }}"
+    dest: "{{ apt_repository_keyring }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: apt_repository_key_src | length > 0
+
+- name: "Read the signing key fingerprints: {{ apt_repository_name }}"
+  ansible.builtin.command:
+    argv: [gpg, --show-keys, --with-colons, "{{ apt_repository_keyring }}"]
+  register: apt_repository_key
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+# A mismatching keyring is left in place so later runs keep failing until it
+# is inspected and removed.
+- name: "Verify the signing key fingerprints: {{ apt_repository_name }}"
+  ansible.builtin.assert:
+    that: apt_repository_fingerprints | reject('in', apt_repository_key.stdout) | list | length == 0
+    fail_msg: >-
+      {{ apt_repository_keyring }} does not contain all of {{ apt_repository_fingerprints | join(', ') }}.
+      Inspect it before deleting and rerunning.
+    quiet: true
+  when: apt_repository_key.rc == 0 or not ansible_check_mode
+
+- name: "Ensure the APT repository is configured: {{ apt_repository_name }}"
+  become: true
+  ansible.builtin.deb822_repository:
+    name: "{{ apt_repository_name }}"
+    types: [deb]
+    uris: ["{{ apt_repository_uri }}"]
+    suites: ["{{ apt_repository_suite }}"]
+    components: "{{ apt_repository_components }}"
+    architectures: ["{{ apt_repository_arch_map[ansible_facts.architecture] }}"]
+    signed_by: "{{ apt_repository_keyring }}"
+  register: apt_repository_result
+
+- name: "Refresh the APT index after adding the repository: {{ apt_repository_name }}"
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: apt_repository_result is changed and not ansible_check_mode
+
+# In check mode on a first run the repository is not really added, so APT
+# cannot see the packages yet.
+- name: "Ensure packages are installed: {{ apt_repository_name }}"
+  become: true
+  ansible.builtin.apt:
+    name: "{{ apt_repository_packages }}"
+    state: present
+    install_recommends: "{{ apt_repository_install_recommends | bool }}"
+    fail_on_autoremove: true
+  when: not (apt_repository_result is changed and ansible_check_mode)

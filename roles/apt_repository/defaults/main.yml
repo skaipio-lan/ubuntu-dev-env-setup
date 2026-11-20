@@ -1,0 +1,21 @@
+---
+# Helper role: installs packages from a signed third-party APT repository.
+# Import it from another role with import_role and these variables:
+#
+#   apt_repository_name          Name of /etc/apt/sources.list.d/<name>.sources
+#   apt_repository_uri           Repository base URL
+#   apt_repository_suite         Suite, for example stable or the release codename
+#   apt_repository_components    List of components, usually [main]
+#   apt_repository_keyring       Keyring path, normally under /etc/apt/keyrings
+#   apt_repository_key_url       URL to download the keyring from, or
+#   apt_repository_key_src       a keyring file in this role's files/ directory
+#   apt_repository_fingerprints  Fingerprints the keyring must all contain
+#   apt_repository_packages      Packages to install from the repository
+#   apt_repository_install_recommends  Install recommended packages too
+apt_repository_key_url: ""
+apt_repository_key_src: ""
+apt_repository_install_recommends: false
+
+apt_repository_arch_map:
+  x86_64: amd64
+  aarch64: arm64
