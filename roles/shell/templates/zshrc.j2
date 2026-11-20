@@ -3,9 +3,9 @@
 # Put machine-specific settings and secrets in ~/.zshrc.local, which is
 # not tracked in Git.
 
-export ZSH="{{ ohmyzsh_dir }}"
-ZSH_THEME="{{ ohmyzsh_theme }}"
-plugins=({{ ohmyzsh_plugins | join(' ') }})
+export ZSH="{{ shell_ohmyzsh_dir }}"
+ZSH_THEME="{{ shell_ohmyzsh_theme }}"
+plugins=({{ shell_ohmyzsh_plugins | join(' ') }})
 
 # Remind about Oh My Zsh updates instead of prompting at shell start.
 zstyle ':omz:update' mode reminder

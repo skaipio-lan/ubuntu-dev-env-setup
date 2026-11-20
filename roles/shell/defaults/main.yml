@@ -9,9 +9,9 @@ shell_set_default: true
 
 # Oh My Zsh is cloned once and then left alone; it updates itself
 # (see the zstyle setting in the .zshrc template).
-ohmyzsh_repo: https://github.com/ohmyzsh/ohmyzsh.git
-ohmyzsh_version: master
-ohmyzsh_dir: "{{ ansible_facts.user_dir }}/.oh-my-zsh"
-ohmyzsh_theme: robbyrussell
-ohmyzsh_plugins:
+shell_ohmyzsh_repo: https://github.com/ohmyzsh/ohmyzsh.git
+shell_ohmyzsh_version: master
+shell_ohmyzsh_dir: "{{ ansible_facts.user_dir }}/.oh-my-zsh"
+shell_ohmyzsh_theme: robbyrussell
+shell_ohmyzsh_plugins:
   - git

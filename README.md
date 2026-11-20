@@ -51,7 +51,7 @@ For another machine, use a separate inventory with its own host alias in the wor
 
 The `shell` role (`install_shell`, tag `shell`) installs zsh, clones Oh My Zsh into `~/.oh-my-zsh`, writes `~/.zshrc` and `~/.zprofile`, and makes zsh your login shell. Log out and back in for the login-shell change to apply.
 
-- Change the theme or plugins with `ohmyzsh_theme` and `ohmyzsh_plugins` (see `roles/shell/defaults/main.yml`), in `group_vars/all.yml` or `host_vars/<host>.yml`.
+- Change the theme or plugins with `shell_ohmyzsh_theme` and `shell_ohmyzsh_plugins` (see `roles/shell/defaults/main.yml`), in `group_vars/all.yml` or `host_vars/<host>.yml`.
 - `~/.zshrc` is managed by Ansible. Editing it directly is undone on the next run, and Ansible keeps a timestamped backup of the replaced version. Put machine-specific settings and secrets in `~/.zshrc.local`, which `~/.zshrc` sources and Git never sees.
 - `~/.zprofile` loads `~/.profile`, so zsh keeps the PATH entries Ubuntu sets there, such as `~/.local/bin`.
 - Oh My Zsh is cloned once and not updated by Ansible. It reminds you when updates are available; run `omz update` to apply them.
@@ -70,6 +70,18 @@ The `git` role (`install_git`, tag `git`) installs Git and manages global settin
   ```
 
   Without `user.yml`, the role leaves `user.name` and `user.email` unchanged and prints a reminder. `user.yml` is loaded as play variables, so it takes precedence over `group_vars` and `host_vars`. Never put passwords, tokens, or keys in it.
+
+## Development tools
+
+The `development` role (`install_development`, tag `development`) installs development packages from the Ubuntu archive, listed in `development_packages` (`roles/development/defaults/main.yml`). It currently installs `ansible-lint`, which also brings `yamllint`.
+
+Lint this repository from its root before committing:
+
+```bash
+ansible-lint
+```
+
+The rules and profile are configured in `.ansible-lint`.
 
 ## Docker
 
@@ -99,7 +111,7 @@ The `applications` role (`install_applications`, tag `applications`) installs de
 
 **Zed** is installed the same way as Zed's official install script: unpacked into `~/.local/zed.app`, with a `zed` command in `~/.local/bin` and a desktop entry in `~/.local/share/applications`. Ansible downloads it only when it is missing; after that Zed updates itself. An existing install made with the official script is adopted as is. The download is verified by HTTPS only, the same as the official script.
 
-**Ferdium** is installed from the official `.deb` on GitHub, pinned to `ferdium_version` and verified against `ferdium_sha256` in `roles/applications/defaults/main.yml`. The download goes to a temporary directory and is deleted after installation. It does not update itself, and Ferdium shows untrusted web content, so keep it current:
+**Ferdium** is installed from the official `.deb` on GitHub, pinned to `applications_ferdium_version` and verified against `applications_ferdium_sha256` in `roles/applications/defaults/main.yml`. The download goes to a temporary directory and is deleted after installation. It does not update itself, and Ferdium shows untrusted web content, so keep it current:
 
 ```bash
 scripts/ferdium-latest-release.sh   # prints version and checksums as YAML

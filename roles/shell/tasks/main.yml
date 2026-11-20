@@ -13,9 +13,9 @@
 # rewrites ~/.zshrc and changes the login shell outside Ansible's control.
 - name: Ensure Oh My Zsh is present
   ansible.builtin.git:
-    repo: "{{ ohmyzsh_repo }}"
-    dest: "{{ ohmyzsh_dir }}"
-    version: "{{ ohmyzsh_version }}"
+    repo: "{{ shell_ohmyzsh_repo }}"
+    dest: "{{ shell_ohmyzsh_dir }}"
+    version: "{{ shell_ohmyzsh_version }}"
     depth: 1
     single_branch: true
     update: false

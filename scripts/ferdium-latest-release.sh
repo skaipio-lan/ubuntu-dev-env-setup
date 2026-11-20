@@ -10,8 +10,8 @@ import json, sys
 release = json.load(sys.stdin)
 version = release["tag_name"].lstrip("v")
 digests = {a["name"]: (a.get("digest") or "").removeprefix("sha256:") for a in release["assets"]}
-print(f"ferdium_version: \"{version}\"")
-print("ferdium_sha256:")
+print(f"applications_ferdium_version: \"{version}\"")
+print("applications_ferdium_sha256:")
 for arch in ("amd64", "arm64"):
     digest = digests.get(f"Ferdium-linux-{version}-{arch}.deb")
     if not digest:

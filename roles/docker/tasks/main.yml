@@ -56,10 +56,10 @@
   ansible.builtin.deb822_repository:
     name: docker
     types: [deb]
-    uris: [ "{{ docker_repo_url }}" ]
-    suites: [ "{{ ansible_facts.distribution_release }}" ]
-    components: [ "{{ docker_repo_channel }}" ]
-    architectures: [ "{{ docker_apt_arch_map[ansible_facts.architecture] }}" ]
+    uris: ["{{ docker_repo_url }}"]
+    suites: ["{{ ansible_facts.distribution_release }}"]
+    components: ["{{ docker_repo_channel }}"]
+    architectures: ["{{ docker_apt_arch_map[ansible_facts.architecture] }}"]
     signed_by: "{{ docker_keyring }}"
   register: docker_repo
 
