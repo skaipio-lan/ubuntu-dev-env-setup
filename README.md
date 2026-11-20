@@ -83,6 +83,20 @@ ansible-lint
 
 The rules and profile are configured in `.ansible-lint`.
 
+### Python (pyenv) and Node.js (nvm)
+
+The `development` role also installs [pyenv](https://github.com/pyenv/pyenv) and [nvm](https://github.com/nvm-sh/nvm) as Git checkouts of pinned release tags, in `~/.pyenv` and `~/.nvm`. Each has its own switch and tag:
+
+| Tool | Switch | Tag | Tool version | Language version |
+| --- | --- | --- | --- | --- |
+| pyenv | `development_python` | `python` | `development_pyenv_version` | `development_python_version` (`3.15`) |
+| nvm | `development_node` | `node` | `development_nvm_version` | `development_node_version` (`26`) |
+
+- The language version is a prefix. When no matching version is installed, the newest match is installed and made the default (`~/.pyenv/version` and nvm's `default` alias). Later patch releases are not installed automatically; run `pyenv install 3.15` or `nvm install 26` to pick them up.
+- pyenv compiles Python from source, so the first run takes several minutes. The role installs the build dependencies from the pyenv wiki.
+- To update pyenv or nvm themselves, bump the release tag variable and rerun with `--tags python` or `--tags node`.
+- The shell integration lines are in the `~/.zshrc` template of the `shell` role, not added by the tools' own installers. They do nothing when a tool is absent. Rerun with `--tags shell` after changing them.
+
 ## Docker
 
 The `docker` role (`install_docker`, tag `docker`) installs Docker Engine, Buildx, and the Compose plugin (`docker compose`) from Docker's official APT repository, enables the `docker` and `containerd` services, and adds you to the `docker` group.

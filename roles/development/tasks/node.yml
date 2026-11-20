@@ -1,0 +1,55 @@
+---
+# Shell integration lives in the shell role's ~/.zshrc template; the nvm
+# install script is not used because it edits startup files.
+- name: Ensure nvm is checked out at the pinned release
+  ansible.builtin.git:
+    repo: https://github.com/nvm-sh/nvm.git
+    dest: "{{ development_nvm_dir }}"
+    version: "{{ development_nvm_version }}"
+  register: development_nvm_checkout
+
+# nvm is a shell function, so it runs through bash after sourcing nvm.sh.
+- name: Find an installed Node.js matching the configured version
+  ansible.builtin.command:
+    argv:
+      - bash
+      - -c
+      - . "$NVM_DIR/nvm.sh" --no-use && nvm version "$1"
+      - nvm
+      - "{{ development_node_version }}"
+  environment:
+    NVM_DIR: "{{ development_nvm_dir }}"
+  register: development_node_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Install Node.js with nvm
+  ansible.builtin.command:
+    argv:
+      - bash
+      - -c
+      - . "$NVM_DIR/nvm.sh" --no-use && nvm install --no-progress "$1"
+      - nvm
+      - "{{ development_node_version }}"
+  environment:
+    NVM_DIR: "{{ development_nvm_dir }}"
+  when: development_node_installed.rc != 0 or development_node_installed.stdout is not match('^v\d')
+  changed_when: true
+
+# Same file `nvm alias default` writes. Skipped in check mode until nvm has
+# really been cloned.
+- name: Ensure the default nvm Node.js version
+  when: not (ansible_check_mode and development_nvm_checkout is changed)
+  block:
+    - name: Ensure the nvm alias directory exists
+      ansible.builtin.file:
+        path: "{{ development_nvm_dir }}/alias"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure the default alias points at the configured version
+      ansible.builtin.copy:
+        content: "{{ development_node_version }}\n"
+        dest: "{{ development_nvm_dir }}/alias/default"
+        mode: "0644"

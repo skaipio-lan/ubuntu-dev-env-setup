@@ -8,3 +8,13 @@
     fail_on_autoremove: true
     update_cache: true
     cache_valid_time: 3600
+
+- name: Set up Python with pyenv
+  ansible.builtin.import_tasks: python.yml
+  when: development_python | bool
+  tags: [python]
+
+- name: Set up Node.js with nvm
+  ansible.builtin.import_tasks: node.yml
+  when: development_node | bool
+  tags: [node]

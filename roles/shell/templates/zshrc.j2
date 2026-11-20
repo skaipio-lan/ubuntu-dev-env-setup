@@ -12,4 +12,15 @@ zstyle ':omz:update' mode reminder
 
 source "$ZSH/oh-my-zsh.sh"
 
+# pyenv and nvm are installed by the development role. Each block does
+# nothing when the tool is absent.
+export PYENV_ROOT="$HOME/.pyenv"
+if [[ -x $PYENV_ROOT/bin/pyenv ]]; then
+  path=("$PYENV_ROOT/bin" $path)
+  eval "$(pyenv init - zsh)"
+fi
+
+export NVM_DIR="$HOME/.nvm"
+[[ -s $NVM_DIR/nvm.sh ]] && source "$NVM_DIR/nvm.sh"
+
 [[ -r ~/.zshrc.local ]] && source ~/.zshrc.local

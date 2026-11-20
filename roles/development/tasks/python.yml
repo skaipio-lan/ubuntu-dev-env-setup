@@ -1,0 +1,47 @@
+---
+- name: Ensure Python build dependencies are installed
+  become: true
+  ansible.builtin.apt:
+    name: "{{ development_python_build_packages }}"
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+
+# Shell integration lives in the shell role's ~/.zshrc template; pyenv's
+# own `init --install` is not used because it edits startup files.
+- name: Ensure pyenv is checked out at the pinned release
+  ansible.builtin.git:
+    repo: https://github.com/pyenv/pyenv.git
+    dest: "{{ development_pyenv_root }}"
+    version: "{{ development_pyenv_version }}"
+  register: development_pyenv_checkout
+
+- name: Find an installed Python matching the configured version
+  ansible.builtin.command:
+    argv: ["{{ development_pyenv_root }}/bin/pyenv", latest, "{{ development_python_version }}"]
+  environment:
+    PYENV_ROOT: "{{ development_pyenv_root }}"
+  register: development_python_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# Compiles from source; takes a few minutes. Skipped in check mode.
+- name: Install Python with pyenv
+  ansible.builtin.command:
+    argv: ["{{ development_pyenv_root }}/bin/pyenv", install, "{{ development_python_version }}"]
+  environment:
+    PYENV_ROOT: "{{ development_pyenv_root }}"
+  when: development_python_installed.rc != 0
+  changed_when: true
+
+# pyenv resolves the prefix in this file to the newest installed match.
+# Skipped in check mode until pyenv has really been cloned.
+- name: Ensure the global pyenv Python version
+  ansible.builtin.copy:
+    content: "{{ development_python_version }}\n"
+    dest: "{{ development_pyenv_root }}/version"
+    mode: "0644"
+  when: not (ansible_check_mode and development_pyenv_checkout is changed)

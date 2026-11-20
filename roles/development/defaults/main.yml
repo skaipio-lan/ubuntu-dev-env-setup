@@ -2,3 +2,42 @@
 # Development tools from the Ubuntu archive.
 development_packages:
   - ansible-lint  # Lints this repository; pulls in yamllint.
+
+# Per-tool switches. Each tool has its own tag as well.
+development_python: true
+development_node: true
+
+# Python through pyenv (https://github.com/pyenv/pyenv), checked out at a
+# release tag. Bump the tag to get newer Python definitions.
+development_pyenv_version: v2.8.15
+development_pyenv_root: "{{ ansible_facts.user_dir }}/.pyenv"
+# A version prefix: the newest matching release is installed when none is,
+# and it becomes the global python. Newer patch releases are not installed
+# automatically; run `pyenv install 3.15` to upgrade.
+development_python_version: "3.15"
+# Build dependencies from the pyenv wiki's suggested build environment.
+development_python_build_packages:
+  - build-essential
+  - libbz2-dev
+  - libffi-dev
+  - libgdbm-dev
+  - liblzma-dev
+  - libncurses-dev
+  - libreadline-dev
+  - libsqlite3-dev
+  - libssl-dev
+  - libxml2-dev
+  - libxmlsec1-dev
+  - libzstd-dev
+  - tk-dev
+  - uuid-dev
+  - xz-utils
+  - zlib1g-dev
+
+# Node.js through nvm (https://github.com/nvm-sh/nvm), checked out at a
+# release tag.
+development_nvm_version: v0.41.0
+development_nvm_dir: "{{ ansible_facts.user_dir }}/.nvm"
+# A major version or nvm alias. Installed when no matching version is, and
+# set as nvm's default. Run `nvm install 26` to pick up newer releases.
+development_node_version: "26"
