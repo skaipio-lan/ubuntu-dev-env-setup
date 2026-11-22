@@ -139,6 +139,13 @@ The `applications` role (`install_applications`, tag `applications`) installs de
 
 **Zed** is installed the same way as Zed's official install script: unpacked into `~/.local/zed.app`, with a `zed` command in `~/.local/bin` and a desktop entry in `~/.local/share/applications`. Ansible downloads it only when it is missing; after that Zed updates itself. An existing install made with the official script is adopted as is. The download is verified by HTTPS only, the same as the official script.
 
+Zed extensions are listed in `applications_zed_extensions` (extension IDs from [zed.dev/extensions](https://zed.dev/extensions)) and written to the `auto_install_extensions` setting in `~/.config/zed/settings.json`. Zed installs any missing ones the next time it starts, and updates them itself. To change only the extensions, rerun with `--tags zed-extensions`.
+
+- `settings.json` may contain comments, so the role does not rewrite it. It keeps one block between `// BEGIN` and `// END ubuntu-dev-env-setup: Zed extensions` markers right after the opening `{`, and leaves the rest of the file alone. It never prints the file's contents, which may include credentials.
+- If `auto_install_extensions` is already set elsewhere in the file, the run stops; move those IDs to `applications_zed_extensions` and delete the setting.
+- Removing an ID from the list does not uninstall the extension; uninstall it from Zed's Extensions page.
+- "TypeScript Language Server" is the `tsgo` extension (TypeScript 7's native server). Which TypeScript servers Zed runs is controlled by the `language_servers` setting for TypeScript in Zed.
+
 **Ghostty** is installed from the Ubuntu archive and, with `applications_ghostty_default: true`, made the default terminal:
 
 - `~/.config/xdg-terminals.list` names Ghostty for `xdg-terminal-exec`, which GNOME uses for Ctrl+Alt+T, Nautilus's "Open in Terminal", and apps that run in a terminal. It overrides Ubuntu's default (Ptyxis) for your user only; if Ghostty is removed, Ptyxis is used again. The role owns this file and overwrites manual edits.

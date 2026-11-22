@@ -8,6 +8,7 @@
   loop:
     - "{{ ansible_facts.user_dir }}/.local/bin"
     - "{{ ansible_facts.user_dir }}/.local/share/applications"
+    - "{{ ansible_facts.user_dir }}/.config/zed"
 
 # Skipped when Zed is already installed; Zed updates itself afterwards.
 - name: Ensure Zed is installed
@@ -43,3 +44,63 @@
     dest: "{{ ansible_facts.user_dir }}/.local/share/applications/dev.zed.Zed.desktop"
     mode: "0755"  # Matches install.sh, which copies the bundled file's mode.
   when: applications_zed_desktop.content is defined
+
+# Zed installs the extensions listed in auto_install_extensions the next
+# time it starts. settings.json allows comments, so instead of rewriting it
+# the role keeps one marked block right after the opening brace.
+- name: Configure Zed extensions to install
+  when: applications_zed_extensions | length > 0
+  tags: [zed-extensions]
+  block:
+    - name: Ensure Zed settings exist
+      ansible.builtin.copy:
+        content: "{\n}\n"
+        dest: "{{ applications_zed_settings }}"
+        mode: "0600"
+        force: false
+      register: applications_zed_settings_created
+
+    # Prints only a count, never the settings, which may hold credentials.
+    - name: Count auto_install_extensions settings outside the managed block
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -I
+          - -c
+          - |
+            import re, sys
+            try:
+                text = open(sys.argv[1]).read()
+            except FileNotFoundError:
+                text = ""
+            text = re.sub(r"// BEGIN ubuntu-dev-env-setup.*?// END ubuntu-dev-env-setup[^\n]*", "", text, flags=re.S)
+            text = re.sub(r"(?m)^\s*//.*$", "", text)
+            print(text.count('"auto_install_extensions"'))
+          - "{{ applications_zed_settings }}"
+      register: applications_zed_extensions_elsewhere
+      changed_when: false
+      check_mode: false
+
+    - name: Stop if auto_install_extensions is already set by hand
+      ansible.builtin.assert:
+        that: applications_zed_extensions_elsewhere.stdout | int == 0
+        fail_msg: >-
+          {{ applications_zed_settings }} already sets auto_install_extensions.
+          Move those entries to applications_zed_extensions and delete the
+          setting from the file, then rerun.
+        quiet: true
+
+    # In check mode on a first run the settings file is not created yet.
+    - name: Ensure Zed extensions are listed in auto_install_extensions
+      ansible.builtin.blockinfile:
+        path: "{{ applications_zed_settings }}"
+        marker: "  // {mark} ubuntu-dev-env-setup: Zed extensions"
+        # Only the top-level brace starts a line; nested ones are indented.
+        insertafter: '^\{\s*$'
+        block: |2
+            "auto_install_extensions": {
+          {% for extension in applications_zed_extensions %}
+              "{{ extension }}": true,
+          {% endfor %}
+            },
+      when: not (ansible_check_mode and applications_zed_settings_created is changed)

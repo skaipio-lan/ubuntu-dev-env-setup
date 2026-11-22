@@ -10,6 +10,22 @@ applications_ghostty: true
 # it when missing and keeps the launcher and desktop entry in place.
 applications_zed_install_dir: "{{ ansible_facts.user_dir }}/.local/zed.app"
 applications_zed_download_url: "https://zed.dev/api/releases/stable/latest/zed-linux-{{ ansible_facts.architecture }}.tar.gz"
+applications_zed_settings: "{{ ansible_facts.user_dir }}/.config/zed/settings.json"
+# Extension IDs from https://zed.dev/extensions, written to
+# auto_install_extensions in settings.json. Zed installs them when it next
+# starts. Removing an ID here does not uninstall the extension.
+applications_zed_extensions:
+  - git-firefly    # Git Firefly
+  - html           # HTML
+  - toml           # TOML
+  - dockerfile     # Dockerfile
+  - sql            # SQL
+  - tsgo           # TypeScript Language Server (TypeScript 7 native)
+  - terraform      # Terraform
+  - biome          # Biome
+  - ansible        # Ansible
+  - github-actions # GitHub Actions
+  - depsy-lsp      # Depsy
 
 # Ferdium is installed from the official .deb on GitHub, pinned to a version
 # and verified by SHA-256. It is not updated automatically: to update, run
