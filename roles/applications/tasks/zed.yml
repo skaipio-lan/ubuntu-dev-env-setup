@@ -45,12 +45,13 @@
     mode: "0755"  # Matches install.sh, which copies the bundled file's mode.
   when: applications_zed_desktop.content is defined
 
-# Zed installs the extensions listed in auto_install_extensions the next
-# time it starts. settings.json allows comments, so instead of rewriting it
-# the role keeps one marked block right after the opening brace.
-- name: Configure Zed extensions to install
-  when: applications_zed_extensions | length > 0
-  tags: [zed-extensions]
+# Zed settings managed by this role: auto_install_extensions (Zed installs
+# the listed extensions when it next starts) plus applications_zed_settings_managed.
+# settings.json allows comments, so instead of rewriting it the role keeps
+# one marked block right after the opening brace.
+- name: Configure Zed settings
+  when: applications_zed_block_settings | length > 0
+  tags: [zed-settings, zed-extensions]
   block:
     - name: Ensure Zed settings exist
       ansible.builtin.copy:
@@ -60,47 +61,57 @@
         force: false
       register: applications_zed_settings_created
 
-    # Prints only a count, never the settings, which may hold credentials.
-    - name: Count auto_install_extensions settings outside the managed block
+    # Prints only key names, never values, which may hold credentials.
+    - name: Find managed Zed settings that are also set outside the block
       ansible.builtin.command:
-        argv:
-          - python3
-          - -I
-          - -c
-          - |
-            import re, sys
-            try:
-                text = open(sys.argv[1]).read()
-            except FileNotFoundError:
-                text = ""
-            text = re.sub(r"// BEGIN ubuntu-dev-env-setup.*?// END ubuntu-dev-env-setup[^\n]*", "", text, flags=re.S)
-            text = re.sub(r"(?m)^\s*//.*$", "", text)
-            print(text.count('"auto_install_extensions"'))
-          - "{{ applications_zed_settings }}"
-      register: applications_zed_extensions_elsewhere
+        argv: "{{ ['python3', '-I', '-c', applications_zed_settings_check, applications_zed_settings] + (applications_zed_block_settings.keys() | list) }}"
+      vars:
+        applications_zed_settings_check: |
+          import json, re, sys
+          try:
+              text = open(sys.argv[1]).read()
+          except FileNotFoundError:
+              text = "{}"
+          text = re.sub(r"// BEGIN ubuntu-dev-env-setup.*?// END ubuntu-dev-env-setup[^\n]*", "", text, flags=re.S)
+          text = re.sub(r"(?m)^\s*//.*$", "", text)
+          text = re.sub(r",(\s*[}\]])", r"\1", text)
+          try:
+              keys = json.loads(text).keys()
+          except ValueError:
+              sys.exit("could not parse the settings file")
+          print(json.dumps(sorted(set(keys) & set(sys.argv[2:]))))
+      register: applications_zed_settings_duplicates
       changed_when: false
       check_mode: false
 
-    - name: Stop if auto_install_extensions is already set by hand
+    - name: Stop if managed Zed settings are also set by hand
       ansible.builtin.assert:
-        that: applications_zed_extensions_elsewhere.stdout | int == 0
+        that: applications_zed_settings_duplicates.stdout | from_json | length == 0
         fail_msg: >-
-          {{ applications_zed_settings }} already sets auto_install_extensions.
-          Move those entries to applications_zed_extensions and delete the
-          setting from the file, then rerun.
+          {{ applications_zed_settings }} sets
+          {{ applications_zed_settings_duplicates.stdout | from_json | join(', ') }}
+          outside the block this role manages. Delete those settings from the
+          file (the role sets them from applications_zed_extensions and
+          applications_zed_settings_managed), then rerun.
         quiet: true
 
-    # In check mode on a first run the settings file is not created yet.
-    - name: Ensure Zed extensions are listed in auto_install_extensions
+    # Earlier versions of this role used a block that held only extensions.
+    - name: Ensure the old extensions-only block is removed
       ansible.builtin.blockinfile:
         path: "{{ applications_zed_settings }}"
         marker: "  // {mark} ubuntu-dev-env-setup: Zed extensions"
+        state: absent
+      when: not (ansible_check_mode and applications_zed_settings_created is changed)
+
+    # In check mode on a first run the settings file is not created yet.
+    - name: Ensure managed Zed settings are in settings.json
+      ansible.builtin.blockinfile:
+        path: "{{ applications_zed_settings }}"
+        marker: "  // {mark} ubuntu-dev-env-setup: Zed settings"
         # Only the top-level brace starts a line; nested ones are indented.
         insertafter: '^\{\s*$'
-        block: |2
-            "auto_install_extensions": {
-          {% for extension in applications_zed_extensions %}
-              "{{ extension }}": true,
+        block: |
+          {% for key, value in applications_zed_block_settings.items() %}
+            "{{ key }}": {{ value | to_nice_json(indent=2, sort_keys=False, ensure_ascii=False) | indent(2) }},
           {% endfor %}
-            },
       when: not (ansible_check_mode and applications_zed_settings_created is changed)

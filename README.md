@@ -139,10 +139,13 @@ The `applications` role (`install_applications`, tag `applications`) installs de
 
 **Zed** is installed the same way as Zed's official install script: unpacked into `~/.local/zed.app`, with a `zed` command in `~/.local/bin` and a desktop entry in `~/.local/share/applications`. Ansible downloads it only when it is missing; after that Zed updates itself. An existing install made with the official script is adopted as is. The download is verified by HTTPS only, the same as the official script.
 
-Zed extensions are listed in `applications_zed_extensions` (extension IDs from [zed.dev/extensions](https://zed.dev/extensions)) and written to the `auto_install_extensions` setting in `~/.config/zed/settings.json`. Zed installs any missing ones the next time it starts, and updates them itself. To change only the extensions, rerun with `--tags zed-extensions`.
+Zed settings are managed in `~/.config/zed/settings.json`. Rerun with `--tags zed-settings` (or `--tags zed-extensions`) to apply only these.
 
-- `settings.json` may contain comments, so the role does not rewrite it. It keeps one block between `// BEGIN` and `// END ubuntu-dev-env-setup: Zed extensions` markers right after the opening `{`, and leaves the rest of the file alone. It never prints the file's contents, which may include credentials.
-- If `auto_install_extensions` is already set elsewhere in the file, the run stops; move those IDs to `applications_zed_extensions` and delete the setting.
+- Extensions are listed in `applications_zed_extensions` (extension IDs from [zed.dev/extensions](https://zed.dev/extensions)) and written to the `auto_install_extensions` setting. Zed installs any missing ones the next time it starts, and updates them itself.
+- Other top-level settings are in `applications_zed_settings_managed`. By default this sets the Catppuccin Frappé theme for dark mode, One Light for light mode, and the Catppuccin Frappé icon theme (from the `catppuccin` and `catppuccin-icons` extensions).
+- `settings.json` may contain comments, so the role does not rewrite it. It keeps these settings in one block between `// BEGIN` and `// END ubuntu-dev-env-setup: Zed settings` markers right after the opening `{`, and leaves the rest of the file alone. It never prints the file's values, which may include credentials.
+- If a managed setting is also set elsewhere in the file, the run stops and names it without changing the file; delete it there, then rerun.
+- Changing the theme in Zed's UI edits the managed block, and the next run changes it back. Change `applications_zed_settings_managed` instead.
 - Removing an ID from the list does not uninstall the extension; uninstall it from Zed's Extensions page.
 - "TypeScript Language Server" is the `tsgo` extension (TypeScript 7's native server). Which TypeScript servers Zed runs is controlled by the `language_servers` setting for TypeScript in Zed.
 

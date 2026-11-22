@@ -26,6 +26,22 @@ applications_zed_extensions:
   - ansible        # Ansible
   - github-actions # GitHub Actions
   - depsy-lsp      # Depsy
+  - catppuccin     # Catppuccin themes
+  - catppuccin-icons # Catppuccin icon themes
+
+# Other top-level Zed settings this role manages. Each key must not also be
+# set by hand in settings.json; the run stops if it is.
+applications_zed_settings_managed:
+  icon_theme: Catppuccin Frappé
+  theme:
+    mode: system
+    light: Catppuccin Latte
+    dark: Catppuccin Frappé
+
+applications_zed_block_settings: >-
+  {{ ({'auto_install_extensions': dict(applications_zed_extensions | product([true]))}
+      if applications_zed_extensions | length > 0 else {})
+     | combine(applications_zed_settings_managed) }}
 
 # Ferdium is installed from the official .deb on GitHub, pinned to a version
 # and verified by SHA-256. It is not updated automatically: to update, run
