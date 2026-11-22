@@ -135,8 +135,16 @@ The `applications` role (`install_applications`, tag `applications`) installs de
 | --- | --- | --- | --- |
 | Zed | `applications_zed` | `zed` | Official stable tarball from zed.dev |
 | Ferdium | `applications_ferdium` | `ferdium` | Official `.deb` from GitHub releases, pinned and checksum-verified |
+| Ghostty | `applications_ghostty` | `ghostty` | Ubuntu archive (universe), updated by APT |
 
 **Zed** is installed the same way as Zed's official install script: unpacked into `~/.local/zed.app`, with a `zed` command in `~/.local/bin` and a desktop entry in `~/.local/share/applications`. Ansible downloads it only when it is missing; after that Zed updates itself. An existing install made with the official script is adopted as is. The download is verified by HTTPS only, the same as the official script.
+
+**Ghostty** is installed from the Ubuntu archive and, with `applications_ghostty_default: true`, made the default terminal:
+
+- `~/.config/xdg-terminals.list` names Ghostty for `xdg-terminal-exec`, which GNOME uses for Ctrl+Alt+T, Nautilus's "Open in Terminal", and apps that run in a terminal. It overrides Ubuntu's default (Ptyxis) for your user only; if Ghostty is removed, Ptyxis is used again. The role owns this file and overwrites manual edits.
+- Ghostty is registered and selected as the system-wide `x-terminal-emulator` alternative, used by older applications and Debian tools. Run `sudo update-alternatives --config x-terminal-emulator` to pick another.
+
+Set `applications_ghostty_default: false` to install Ghostty without changing the default; the role then leaves both settings as they are.
 
 **Ferdium** is installed from the official `.deb` on GitHub, pinned to `applications_ferdium_version` and verified against `applications_ferdium_sha256` in `roles/applications/defaults/main.yml`. The download goes to a temporary directory and is deleted after installation. It does not update itself, and Ferdium shows untrusted web content, so keep it current:
 

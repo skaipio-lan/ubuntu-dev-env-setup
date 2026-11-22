@@ -1,0 +1,39 @@
+---
+- name: Ensure Ghostty is installed
+  become: true
+  ansible.builtin.apt:
+    name: ghostty
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+  register: applications_ghostty_install
+
+- name: Make Ghostty the default terminal
+  when: applications_ghostty_default | bool
+  block:
+    # GNOME (Ctrl+Alt+T, Nautilus, apps with Terminal=true) opens terminals
+    # through xdg-terminal-exec, which reads this file before Ubuntu's
+    # default in /usr/share/xdg-terminal-exec. If Ghostty is missing it
+    # falls back to Ptyxis.
+    - name: Ensure the user's xdg-terminal-exec preference lists Ghostty
+      ansible.builtin.copy:
+        content: |
+          # Managed by ubuntu-dev-env-setup (applications role).
+          {{ applications_ghostty_desktop_id }}
+        dest: "{{ ansible_facts.user_dir }}/.config/xdg-terminals.list"
+        mode: "0644"
+
+    # Used by Debian tools and older applications that run
+    # x-terminal-emulator. The Ghostty package does not register itself.
+    # Skipped in check mode until Ghostty is really installed.
+    - name: Ensure Ghostty is the x-terminal-emulator alternative
+      become: true
+      community.general.alternatives:
+        name: x-terminal-emulator
+        link: /usr/bin/x-terminal-emulator
+        path: /usr/bin/ghostty
+        priority: 45
+        state: selected
+      when: not (ansible_check_mode and applications_ghostty_install is changed)

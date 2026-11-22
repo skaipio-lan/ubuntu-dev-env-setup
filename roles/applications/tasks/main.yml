@@ -8,3 +8,8 @@
   ansible.builtin.import_tasks: ferdium.yml
   when: applications_ferdium | bool
   tags: [ferdium]
+
+- name: Install Ghostty
+  ansible.builtin.import_tasks: ghostty.yml
+  when: applications_ghostty | bool
+  tags: [ghostty]

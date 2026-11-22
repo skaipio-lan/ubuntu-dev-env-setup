@@ -2,6 +2,7 @@
 # Per-application switches. Each application has its own tag as well.
 applications_zed: true
 applications_ferdium: true
+applications_ghostty: true
 
 # Zed is installed the same way as the official install script
 # (https://zed.dev/install.sh): the stable tarball is unpacked into
@@ -25,3 +26,9 @@ applications_ferdium_release_base: https://github.com/ferdium/ferdium-app/releas
 applications_ferdium_deb_url: >-
   {{ applications_ferdium_release_base ~ '/v' ~ applications_ferdium_version
      ~ '/Ferdium-linux-' ~ applications_ferdium_version ~ '-' ~ applications_ferdium_arch ~ '.deb' }}
+
+# Ghostty from the Ubuntu archive (universe), updated by APT. When
+# applications_ghostty_default is true it becomes the default terminal for
+# GNOME (through xdg-terminal-exec) and the x-terminal-emulator alternative.
+applications_ghostty_default: true
+applications_ghostty_desktop_id: com.mitchellh.ghostty.desktop
