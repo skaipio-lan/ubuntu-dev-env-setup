@@ -76,6 +76,12 @@ development_github_cli_gpg_fingerprints:
   - 2C6106201985B60E6C7AC87323F3D4EA75716059
   - 7F38BBB59D064DBCB3D84D725612B36462313325
 development_github_cli_keyring: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+# gh extensions as OWNER/REPO, installed for your user when missing.
+# Removing one here does not uninstall it; run `gh extension remove NAME`.
+development_github_cli_extensions:
+  - github/gh-stack  # gh stack: stacked pull requests (https://github.com/github/gh-stack)
+development_github_cli_extensions_dir: >-
+  {{ ansible_facts.env.XDG_DATA_HOME | default(ansible_facts.user_dir ~ '/.local/share', true) }}/gh/extensions
 
 # Azure CLI (az) from Microsoft's APT repository
 # (https://learn.microsoft.com/cli/azure/install-azure-cli-linux), using the

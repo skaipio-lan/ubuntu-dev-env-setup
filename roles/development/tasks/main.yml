@@ -39,6 +39,18 @@
   when: development_github_cli | bool
   tags: [gh]
 
+# Extensions are installed for this user and do not need `gh auth login`.
+# gh puts each one in a directory named after its repository, so an
+# existing directory means it is installed. Update with
+# `gh extension upgrade --all`.
+- name: Ensure GitHub CLI extensions are installed
+  ansible.builtin.command:
+    argv: [gh, extension, install, "{{ item }}"]
+    creates: "{{ development_github_cli_extensions_dir }}/{{ item | basename }}"
+  loop: "{{ development_github_cli_extensions }}"
+  when: development_github_cli | bool
+  tags: [gh]
+
 - name: Set up the Azure CLI
   ansible.builtin.import_role:
     name: apt_repository

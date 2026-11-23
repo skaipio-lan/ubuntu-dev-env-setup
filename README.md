@@ -117,6 +117,8 @@ Both use the `apt_repository` helper role (see [Third-party APT repositories](#t
 
 Sign in once with `gh auth login` and `az login`; the role does not handle credentials.
 
+gh extensions listed in `development_github_cli_extensions` are installed for your user, in `~/.local/share/gh/extensions`, when missing. By default this is [`github/gh-stack`](https://github.com/github/gh-stack), which adds `gh stack` for stacked pull requests. Installing does not need `gh auth login`. Ansible does not update extensions; run `gh extension upgrade --all`. Removing an entry from the list does not uninstall it; run `gh extension remove <name>`.
+
 ## Docker
 
 The `docker` role (`install_docker`, tag `docker`) installs Docker Engine, Buildx, and the Compose plugin (`docker compose`) from Docker's official APT repository, enables the `docker` and `containerd` services, and adds you to the `docker` group.
