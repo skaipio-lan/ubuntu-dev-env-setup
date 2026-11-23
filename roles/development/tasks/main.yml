@@ -9,6 +9,11 @@
     update_cache: true
     cache_valid_time: 3600
 
+- name: Set up Neovim for all users
+  ansible.builtin.import_tasks: neovim.yml
+  when: development_neovim | bool
+  tags: [nvim]
+
 - name: Set up Python with pyenv
   ansible.builtin.import_tasks: python.yml
   when: development_python | bool

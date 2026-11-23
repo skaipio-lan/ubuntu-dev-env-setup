@@ -8,6 +8,27 @@ development_python: true
 development_node: true
 development_github_cli: true
 development_azure_cli: true
+development_neovim: true
+
+# Neovim from the Ubuntu archive (universe), installed system-wide in
+# /usr/bin so every user on the machine can run nvim. APT updates it.
+development_neovim_packages:
+  - neovim
+# Vimscript written to /etc/xdg/nvim/sysinit.vim, which every user's nvim
+# reads before their own config. Filetype plugins may still change these
+# for some languages (for example, Makefiles keep real tabs).
+development_neovim_sysinit: |
+  " Indent with 4 spaces; <Tab> inserts spaces.
+  set expandtab
+  set tabstop=4
+  set softtabstop=4
+  set shiftwidth=4
+# Make nvim the system-wide editor: select it for the alternatives below and
+# set EDITOR and VISUAL in /etc/environment.
+development_neovim_default_editor: true
+development_neovim_alternatives:
+  - editor
+  - vi
 
 # Python through pyenv (https://github.com/pyenv/pyenv), checked out at a
 # release tag. Bump the tag to get newer Python definitions.

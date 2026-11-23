@@ -1,0 +1,66 @@
+---
+- name: Ensure Neovim is installed for all users
+  become: true
+  ansible.builtin.apt:
+    name: "{{ development_neovim_packages }}"
+    state: present
+    install_recommends: false
+    fail_on_autoremove: true
+    update_cache: true
+    cache_valid_time: 3600
+  register: development_neovim_install
+
+# Read by every user's nvim before their own init.lua or init.vim, so users
+# can still override these settings. The Ubuntu package does not ship this
+# file, so the role owns it.
+- name: Ensure the system-wide Neovim config directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/xdg/nvim
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Ensure the system-wide Neovim defaults are in place
+  become: true
+  ansible.builtin.copy:
+    content: |
+      " Managed by ubuntu-dev-env-setup (development role). Local edits are
+      " overwritten; override settings in ~/.config/nvim instead.
+      {{ development_neovim_sysinit }}
+    dest: /etc/xdg/nvim/sysinit.vim
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Make Neovim the default editor for all users
+  when: development_neovim_default_editor | bool
+  block:
+    # The neovim package registers these alternatives at priority 30, below
+    # nano and vim, so they must be selected explicitly. Skipped in check
+    # mode until Neovim is really installed.
+    - name: Ensure Neovim is selected for the editor alternatives
+      become: true
+      community.general.alternatives:
+        name: "{{ item }}"
+        link: /usr/bin/{{ item }}
+        path: /usr/bin/nvim
+        priority: 30
+        state: selected
+      loop: "{{ development_neovim_alternatives }}"
+      when: not (ansible_check_mode and development_neovim_install is changed)
+
+    # Many programs read $VISUAL or $EDITOR before falling back to the
+    # editor alternative. /etc/environment is read by PAM at login, for
+    # every user and shell; it applies from the next login.
+    - name: Ensure EDITOR and VISUAL name Neovim system-wide
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        regexp: "^{{ item }}="
+        line: "{{ item }}=nvim"
+        owner: root
+        group: root
+        mode: "0644"
+      loop: [EDITOR, VISUAL]

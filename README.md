@@ -83,6 +83,13 @@ ansible-lint
 
 The rules and profile are configured in `.ansible-lint`.
 
+### Neovim
+
+The `development` role installs [Neovim](https://neovim.io) (`nvim`) from the Ubuntu archive (universe) when `development_neovim` is true (tag `nvim`). The package goes into `/usr/bin`, so every user on the machine can use it, and APT updates it with the rest of the system. Extra packages, such as `python3-pynvim`, can be added to `development_neovim_packages`.
+
+- **Defaults for all users:** `/etc/xdg/nvim/sysinit.vim` is written from `development_neovim_sysinit`. By default it makes indentation 4 spaces (`expandtab`, `tabstop`, `softtabstop`, and `shiftwidth` all set to 4). Neovim reads this file before each user's `~/.config/nvim/init.lua` or `init.vim`, so users can override any of it. Filetype plugins may still change indentation for some languages; Makefiles, for example, keep real tabs. The role owns the file and overwrites manual edits.
+- **Default editor:** with `development_neovim_default_editor: true`, `nvim` is selected for the `editor` and `vi` alternatives (listed in `development_neovim_alternatives`; add `vim` to redirect that command too), and `EDITOR=nvim` and `VISUAL=nvim` are set in `/etc/environment`. The variables apply from the next login. A user can still choose another editor by setting `EDITOR` and `VISUAL` in their own shell startup files. Run `sudo update-alternatives --config editor` to pick another system default.
+
 ### Python (pyenv) and Node.js (nvm)
 
 The `development` role also installs [pyenv](https://github.com/pyenv/pyenv) and [nvm](https://github.com/nvm-sh/nvm) as Git checkouts of pinned release tags, in `~/.pyenv` and `~/.nvm`. Each has its own switch and tag:
