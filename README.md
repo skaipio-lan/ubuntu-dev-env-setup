@@ -59,8 +59,9 @@ The `shell` role (`install_shell`, tag `shell`) installs zsh, clones Oh My Zsh i
 
 ## Git
 
-The `git` role (`install_git`, tag `git`) installs Git and manages global settings in `~/.gitconfig`.
+The `git` role (`install_git`, tag `git`) installs Git and [Git LFS](https://git-lfs.com) from the Ubuntu archive (`git_packages` in `roles/git/defaults/main.yml`) and manages global settings in `~/.gitconfig`.
 
+- Installing the `git-lfs` package runs `git lfs install --system`, so the LFS filters are enabled for every user in `/etc/gitconfig`; nobody needs to run `git lfs install`. Repositories cloned before Git LFS was installed need `git lfs pull` to download their LFS files.
 - Shared settings live in `git_global_config` (`roles/git/defaults/main.yml`); it sets `init.defaultBranch` to `main`. Removing an entry stops managing it but does not unset it.
 - Your name and email come from `user.yml` at the repository root, which Git ignores:
 

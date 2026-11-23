@@ -1,4 +1,10 @@
 ---
+# Packages from the Ubuntu archive. Installing git-lfs also enables its
+# filters for all users in /etc/gitconfig (git lfs install --system).
+git_packages:
+  - git
+  - git-lfs
+
 # Identity is set in user.yml at the repository root (not tracked in Git).
 # Empty values leave user.name and user.email untouched.
 git_user_name: ""
